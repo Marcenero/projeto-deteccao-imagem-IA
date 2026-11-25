@@ -1,281 +1,208 @@
 # Detecção de imagens geradas por IA
 
-O dataset atual planejado é o CIFAKE, com resolução de 32 × 32 e seleção visual da categoria automobile. A seção CIFAKE ao final deste documento descreve o procedimento atual. As seções seguintes registram a preparação anterior do GenImage.
+## Sobre o projeto
 
-A etapa 1 prepara amostras do GenImage Stable Diffusion 1.4 para análise em CPU. A classe 0 corresponde a imagens do ImageNet e a classe 1 a imagens geradas pelo SD 1.4. A metodologia do projeto prevê análise por FFT 2D na faixa de 0,25 a 0,50 ciclos/pixel em etapas posteriores.
+Projeto acadêmico de Segurança da Informação que investiga a detecção de imagens sintéticas e a sensibilidade dos classificadores a transformações digitais. O dataset definitivo é o **CIFAKE**, restrito a automóveis de passeio em imagens JPEG de 32 × 32 pixels. A avaliação independente e a análise estatística da Etapa 6 estão concluídas.
 
-## Executar
+## Objetivo e pergunta de pesquisa
 
-Execute os comandos abaixo na raiz do projeto com Python 3.12 e PowerShell.
+Como características espaciais e de frequência, isoladas ou combinadas, se comportam na detecção de imagens geradas por IA após compressão, redimensionamento e desfoque? O estudo compara Random Forest com e sem aumento de dados e uma representação espectral ampliada. Os resultados são exploratórios e restritos ao domínio investigado.
+
+## Dataset CIFAKE
+
+Foi utilizada a versão 3 do [CIFAKE no Kaggle](https://www.kaggle.com/datasets/birdy654/cifake-real-and-ai-generated-synthetic-images). As imagens REAL vêm do CIFAR-10; as FAKE foram geradas com Stable Diffusion 1.4. Os rótulos binários são REAL = 0 e FAKE = 1. Consulte o [artigo CIFAKE](https://doi.org/10.1109/ACCESS.2024.3356122) e seu [repositório](https://github.com/jordan-bird/CIFAKE-Real-and-AI-Generated-Synthetic-Images).
+
+| Amostra | REAL | FAKE | Imagens de origem | Uso |
+| --- | ---: | ---: | ---: | --- |
+| Treino | 105 | 105 | 210 | Ajuste dos modelos |
+| Validação | 15 | 15 | 30 | Comparação exploratória |
+| Teste inicial | 30 | 30 | 60 | Robustez inicial |
+| Teste independente | 60 | 60 | 120 | Avaliação independente |
+
+São **420 imagens de origem selecionadas**. O teste independente usa outras imagens da partição oficial de teste do mesmo CIFAKE; não é um dataset externo. O histórico anterior de investigação GenImage está em [documentacao/historico_genimage.md](documentacao/historico_genimage.md).
+
+## Seleção semântica e particionamento
+
+Uma ResNet-20 pré-treinada em CIFAR-10 priorizou candidatos para revisão humana, sem decidir automaticamente a categoria. A revisão aceitou automóveis de passeio reconhecíveis, rejeitou outros veículos e marcou dúvidas como `ambiguo`. As folhas misturam classes e ocultam origem e confiança. A amostra inicial usou seed 42: treino e validação experimentais vêm do treino oficial; o teste inicial vem do teste oficial.
+
+Para o teste independente, a seed 43 selecionou 60 imagens por classe entre as confirmadas por revisão humana. Foram excluídos os identificadores e hashes das 300 imagens anteriores e dos 4.000 candidatos históricos. A triagem dHash de 64 bits, distância de Hamming ≤ 3, não encontrou pares suspeitos; ela não garante ausência absoluta de duplicatas perceptuais. Os bytes JPEG foram preservados.
+
+Os manifestos locais são `data/preparados/cifake/manifest.csv` e `data/preparados/cifake_teste_independente/manifest.csv`. Seus SHA-256 são, respectivamente, `6df4a531c3af61590b6f1e23c1ea99e24eebea452c7cc8e46686a96c8a764e2c` e `34bd18276507e233b8fde0f9011d3c30d4990fac7ba4c053827d5905409fb12d`.
+
+## Fluxo metodológico
+
+```mermaid
+flowchart TD
+    A[CIFAKE] --> B[Priorização semântica ResNet-20]
+    B --> C[Revisão humana]
+    C --> D[Particionamento experimental]
+    D --> T[Treino: 210 imagens]
+    D --> V[Validação: 30 imagens]
+    D --> X[Teste inicial: 60 imagens]
+    T --> U[Originais e aumento de dados]
+    U --> F[Extração espacial e espectral]
+    F --> H[Representações espaciais, espectrais e híbridas]
+    H --> M[Dez modelos Random Forest]
+    M --> R[Avaliação de robustez]
+    V --> R
+    X --> R
+    A --> I[Seleção e revisão independentes]
+    I --> J[Teste independente: 120 imagens]
+    M --> K[Avaliação independente]
+    J --> K
+    K --> S[Análise estatística pareada]
+```
+
+## Extração de características
+
+As imagens são carregadas em RGB, mantidas em 32 × 32 e convertidas para `float64` em [0, 1]. A escala de cinza é `Y = 0,299 R + 0,587 G + 0,114 B`.
+
+As **40 características espaciais** são médias e desvios padrão RGB (6), histogramas normalizados com oito intervalos fixos por canal (24), correlações de Pearson entre canais (3), médias das diferenças absolutas entre vizinhos horizontais e verticais por canal (6) e variância do Laplaciano em cinza (1). Correlações envolvendo canal constante são definidas como zero. O Laplaciano usa kernel `[[0,1,0],[1,-4,1],[0,1,0]]` e repetição da borda.
+
+A FFT 2D é aplicada após subtração da média. Calcula-se `fftshift(fft2(Y − média))` e potência `|F|²`, normalizada pela soma na região `0 < r ≤ 0,50` ciclos/pixel. Excluem-se DC e os cantos fora dessa região, que contém 794 coeficientes. O perfil exploratório tem 16 intervalos radiais; a grade tem passo de 1/32 ciclo/pixel.
+
+| Representação | Entradas | Dimensão |
+| --- | --- | ---: |
+| Espacial | Estatísticas, histogramas, correlações, diferenças e Laplaciano | 40 |
+| Espectral original | E1, E2, E3 | 3 |
+| Espectral ampliada | E1, E2, E3, B2, B3, B4, centróide, entropia | 8 |
+| Híbrida original | Espacial + espectral original | 43 |
+| Híbrida ampliada | Espacial + espectral ampliada | 48 |
+
+Os identificadores, rótulos, caminhos e partições são metadados, não entradas. A ordem das características é registrada nos relatórios dos modelos. Para imagens de energia espectral nula, os vetores espectrais são definidos como zero e o caso é registrado.
+
+## Classificadores Random Forest
+
+São **dez classificadores**, um para cada representação com treino original e outro com aumento de dados. Cada floresta calcula a média das probabilidades de classe estimadas pelas árvores e escolhe a classe de maior média; em empate, a decisão padrão favorece a primeira classe, REAL. FAKE é a classe positiva.
+
+Todos usam `n_estimators=300`, `max_depth=6`, `min_samples_split=4`, `min_samples_leaf=2`, `max_features=1.0`, `criterion="gini"`, `bootstrap=True`, `random_state=42` e `n_jobs=-1`. Não houve busca de hiperparâmetros nem ajuste de limiar. A importância por redução de impureza não demonstra causalidade e pode ser afetada por correlações.
+
+## Transformações digitais
+
+Cada transformação parte da imagem original, sem encadeamento. Os sete cenários são: original; JPEG 75 e 30 em memória, com `subsampling=0`, `optimize=False`, `progressive=False`; resize 32→24→32 e 32→16→32, com Lanczos na redução e bilinear no retorno; e blur gaussiano com sigma 0,5 e 1,0, bordas `reflect`, `truncate=4`, sem mistura de canais e com arredondamento para RGB de 8 bits. O retorno ao tamanho original não recupera informação perdida. As imagens já possuem compressão JPEG histórica.
+
+## Data Augmentation
+
+Cada uma das 210 imagens de treino fornece a versão original e seis transformadas: **1.470 instâncias**, com 735 por classe. As versões são dependentes da mesma imagem de origem. Validação e teste não entram no ajuste. A aplicação do princípio de aumento a Random Forest adapta, sem reproduzir integralmente, a investigação com redes neurais de [Wang et al. (2020)](https://openaccess.thecvf.com/content_CVPR_2020/html/Wang_CNN-Generated_Images_Are_Surprisingly_Easy_to_Spot..._for_Now_CVPR_2020_paper.html).
+
+## Ampliação espectral
+
+As sete faixas são B1 `(0; 0,0625)`, B2 `[0,0625; 0,125)`, B3 `[0,125; 0,1875)`, B4 `[0,1875; 0,25)`, E1 `[0,25; 0,3125)`, E2 `[0,3125; 0,375)` e E3 `[0,375; 0,50]`. E1–E3 são as três entradas espectrais originais. A versão ampliada adiciona B2–B4, centróide `Σ rᵢpᵢ` e entropia normalizada `−Σ pᵢ ln(pᵢ)/ln(K)`, com `0 ln(0) = 0`.
+
+B1 é diagnóstico: as sete energias somam 1 quando a energia é não nula. Etotal também não é entrada, pois é a soma de E1–E3. Os modelos e vetores anteriores permanecem inalterados.
+
+## Avaliação independente
+
+Os dez modelos congelados foram avaliados nas 120 imagens independentes e seus sete cenários: **840 instâncias**, **70 combinações** e **8.400 predições individuais**. A métrica principal congelada é o F1 médio nos seis cenários transformados. Acurácia, precisão, recall, F1, especificidade e matrizes de confusão também foram registradas. As comparações são pareadas pelo identificador da imagem.
+
+## Resultados e análise estatística
+
+| Modelo | F1 original | F1 médio transformado | Pior F1 transformado |
+| --- | ---: | ---: | ---: |
+| Espacial original | 0,883 | 0,837 | 0,741 |
+| Espacial aumentado | 0,876 | 0,857 | 0,818 |
+| Espectral original | 0,667 | 0,295 | 0,085 |
+| Espectral aumentado | 0,628 | 0,457 | 0,351 |
+| Espectral ampliado original | 0,720 | 0,445 | 0,213 |
+| Espectral ampliado aumentado | 0,718 | 0,646 | 0,588 |
+| Híbrido original | 0,831 | 0,567 | 0,342 |
+| Híbrido aumentado | 0,876 | 0,856 | 0,809 |
+| Híbrido ampliado original | 0,821 | 0,606 | 0,444 |
+| Híbrido ampliado aumentado | 0,855 | 0,851 | 0,803 |
+
+O aumento de dados elevou numericamente o F1 médio transformado nas cinco representações; no espacial, o IC da diferença inclui zero. A ampliação espectral beneficiou principalmente os modelos exclusivamente espectrais. O espacial e os híbridos aumentados ficaram próximos; a superioridade numérica híbrida observada na validação não se confirmou no teste independente.
+
+O bootstrap usa **10.000 reamostragens**, seed 42, estratificadas por classe e pareadas por imagem, preservando todos os cenários e modelos. Os ICs percentis de 95% abaixo são calculados diretamente sobre as diferenças de F1 médio transformado:
+
+| Comparação: segundo menos primeiro | Diferença | IC 95% |
+| --- | ---: | ---: |
+| Espacial aumentado → híbrido aumentado | −0,0010 | [−0,0068; 0,0038] |
+| Espacial aumentado → híbrido ampliado aumentado | −0,0060 | [−0,0374; 0,0281] |
+| Híbrido aumentado → híbrido ampliado aumentado | −0,0049 | [−0,0369; 0,0298] |
+
+Um intervalo que inclui zero não demonstra equivalência. Os ICs são condicionais aos modelos treinados e não incluem variação de novos treinamentos; as comparações são exploratórias. Veja [tabelas](resultados/analise_final/tabelas/), [síntese](resultados/analise_final/sintese_resultados.md) e [relatório](resultados/analise_final/relatorio.json).
+
+![F1 médio dos modelos](resultados/analise_final/figuras/06_f1_medio.png)
+
+![Intervalos das diferenças pareadas](resultados/analise_final/figuras/11_diferencas_pareadas.png)
+
+## Instalação e dependências
+
+Na raiz do projeto, com Python 3.12 e PowerShell:
 
 ```powershell
 python -m venv .venv
 .\.venv\Scripts\python.exe -m pip install -r requirements.txt
-.\.venv\Scripts\python.exe -m unittest discover -s testes -v
-.\.venv\Scripts\python.exe -m preparacao_dados --profile smoke --source streaming
-```
-
-Para preparar a amostra de 4.000 imagens, troque `--profile smoke` por `--profile experiment`. A seed, as cotas por classe e os limites de leitura ficam em [config.yaml](config.yaml).
-
-| Perfil | Treino por classe | Validação por classe | Teste por classe | Total |
-| --- | ---: | ---: | ---: | ---: |
-| `smoke` | 140 | 20 | 40 | 400 |
-| `experiment` | 1.400 | 200 | 400 | 4.000 |
-
-## Fontes de dados
-
-O streaming usa a revisão `3f4b9f921a673be09a93b335ed728cea0c6ecf33` do espelho Hugging Face. A configuração `sd14-train` tem 189 shards (93,06 GB) e `sd14-test` tem 8 (3,56 GB). Os campos são `image_path`, bytes da imagem, classe e gerador. O treino traz também MD5, largura e altura de origem. O programa mede formato e dimensões a partir dos bytes decodificados. A configuração `sd14-validation` do espelho é um alias do teste. [Espelho e esquema no Hugging Face](https://huggingface.co/datasets/nebula/GenImage-arrow/tree/3f4b9f921a673be09a93b335ed728cea0c6ecf33)
-
-A leitura usa requisições HTTP parciais com limite total de 1.024 MiB para `smoke` e 5.120 MiB para `experiment`. O programa verifica o espaço livre antes de conectar, descarta os lotes Arrow após o uso e grava somente as imagens selecionadas. Se o servidor recusar a resposta parcial ou a amostra ficar aquém das cotas, o processo termina com erro e registra o resultado da tentativa.
-
-Para usar a distribuição oficial, extraia apenas o subconjunto SD 1.4 em uma pasta com `train/ai`, `train/nature`, `val/ai` e `val/nature`. Verifique o espaço necessário para o arquivo compactado e a extração antes de baixá-lo. [Repositório oficial e links de download do GenImage](https://github.com/GenImage-Dataset/GenImage)
-
-```powershell
-.\.venv\Scripts\python.exe -m preparacao_dados --profile smoke --source local --local-root "data/Stable Diffusion V1.4"
-```
-
-Use `--local-version` para registrar a versão ou o SHA-256 do arquivo oficial extraído. O modo local embaralha o inventário inteiro de caminhos elegíveis de cada classe antes de ler os arquivos.
-
-## Amostragem e integridade
-
-- A validação experimental é retirada do treino original. O teste experimental usa exclusivamente a avaliação original, chamada `val` nos arquivos oficiais e `test` no espelho. O manifesto usa `test` como nome normalizado.
-- Com seed 42, o streaming embaralha os shards e as linhas dos lotes lidos. As cotas por shard incentivam variedade de origens. A leitura alcança até três lotes por shard no `smoke` e 12 no `experiment`. Como os lotes são lidos do começo de cada shard, a amostra tem probabilidades de inclusão desiguais. O relatório identifica os shards que contribuíram.
-- O teste é preenchido primeiro. Um SHA-256 já aceito em qualquer conjunto faz a cópia posterior ser descartada, inclusive quando os rótulos divergem. Os números de inválidos e duplicatas se referem aos candidatos inspecionados. Alterações de codificação ou de conteúdo podem produzir hashes diferentes para imagens visualmente semelhantes.
-- O relatório conta categorias por classe e split quando há um WNID do ImageNet no caminho ou um índice semântico no nome da imagem gerada. WNIDs e índices do SD 1.4 ficam em espaços de identificação distintos. Os nomes das imagens reais de avaliação contêm apenas o número da imagem e ficam com categoria vazia. Caminhos, formatos e demais metadados servem à auditoria. As etapas futuras de classificação devem consumir os pixels padronizados.
-
-## Saídas
-
-- `data/prepared/<perfil>/manifest.csv` lista ID na fonte, caminho relativo ao manifesto, classe, origem, splits, categoria quando disponível, largura, altura, formato e SHA-256.
-- `data/prepared/<perfil>/originals/` preserva os bytes fornecidos pela fonte, sem recompressão.
-- [resultados/resumo_dataset.json](resultados/resumo_dataset.json) registra a última execução, a procedência, as contagens, as distribuições e os detalhes de inválidos e duplicatas encontrados. O campo `status` distingue uma amostra concluída de uma tentativa interrompida.
-
-`preparacao_dados.imagens.preprocess_image` recebe bytes ou um caminho, decodifica a imagem, aplica a orientação EXIF, converte para RGB e retorna uma imagem Pillow de 256 × 256. O recorte central preserva a proporção e o redimensionamento usa Lanczos para ambas as classes. A função opera em memória e preserva os originais.
-
-## Resultado da execução inicial
-
-O `smoke` via streaming produziu 400 imagens a partir de 738.787.328 bytes de Arrow lidos. Foram observados zero arquivos inválidos e zero duplicatas exatas entre os candidatos inspecionados. As 200 imagens reais eram JPEG, com resoluções variadas. As 200 imagens geradas eram PNG de 512 × 512. Essa diferença pode introduzir um atalho de classificação por artefatos de compressão ou de redimensionamento, mesmo após a padronização.
-
-O protocolo experimental do benchmark está descrito no [artigo do GenImage](https://arxiv.org/abs/2306.08571).
-
-## Investigação de categoria única
-
-O inventário preliminar em `resultados/inventario_categorias.csv` reúne as contagens por WNID no treino e por prefixo nos arquivos sintéticos das duas partições. A tabela do ImageNet associa nomes, WNIDs e índices. Ainda não foi identificada evidência de que o prefixo dos arquivos sintéticos use essa mesma ordem. Por isso as colunas de mapeamento confirmado e pares balanceados estão vazias. As imagens reais da avaliação têm identificadores sem WNID no índice disponível.
-
-O `mapping.json` associa caminhos a índices globais de registros, mas não especifica offsets de bytes ou um índice de batches Arrow. A leitura de 64 KiB confirmou o esquema Arrow e revelou que o primeiro batch exige cerca de 7 MB. O acesso seletivo aos registros permanece por validar. A escolha da categoria e a amostra definitiva dependem da confirmação do mapeamento e da avaliação do custo de leitura.
-
-Para reproduzir o inventário com os índices públicos já obtidos na pasta local `.venv`:
-
-```powershell
-.\.venv\Scripts\python.exe -m preparacao_dados.inventario_categorias --class-map .venv/imagenet-class-index.json --train-index .venv/genimage-train-index.json --test-index .venv/genimage-test-index.json
-```
-
-## CIFAKE e seleção visual
-
-O projeto passa a utilizar o CIFAKE para reduzir dificuldades de recuperação e de confirmação semântica encontradas na amostra GenImage. A versão 3 foi obtida no [Kaggle](https://www.kaggle.com/datasets/birdy654/cifake-real-and-ai-generated-synthetic-images). As imagens REAL procedem do CIFAR-10 e as FAKE foram geradas com Stable Diffusion 1.4. O projeto original fornece rótulos binários. [Repositório CIFAKE](https://github.com/jordan-bird/CIFAKE-Real-and-AI-Generated-Synthetic-Images) · [Artigo CIFAKE](https://doi.org/10.1109/ACCESS.2024.3356122)
-
-Os nomes e diretórios inspecionados não fornecem confirmação semântica para automobile. As folhas em `resultados/cifake/folhas_contato/` contêm candidatos sorteados com seed 42, separados por classe e partição. Atribua `sim` na coluna `automobile` de `resultados/cifake/selecao_categoria.csv` apenas quando a imagem mostrar um automóvel reconhecível. Use o mesmo critério para REAL e FAKE e deixe os casos ambíguos vazios. O par folha e posição identifica cada imagem. As folhas não constituem rótulos confirmados até a conferência. Sorteiam-se 1.500 candidatos por classe do treino e 500 por classe do teste. Se forem insuficientes, a preparação informará a falta.
-
-Após a revisão, execute:
-
-```powershell
-.\.venv\Scripts\python.exe -m preparacao_dados.cifake prepare
-.\.venv\Scripts\python.exe -m unittest discover -s testes -v
-```
-
-O manifesto resultante fica em `data/preparados/cifake/manifest.csv`. As cotas configuráveis em `config.yaml` são, por classe, 105 para treino e 15 para validação retiradas do treino oficial e 30 do teste oficial. Os arquivos selecionados mantêm seus bytes e são deduplicados por SHA-256. `preprocess_cifake` aplica orientação EXIF e conversão RGB, exige 32 × 32 e não redimensiona.
-
-Para criar novamente as folhas em uma instalação limpa, extraia a versão 3 do arquivo oficial em `data/raw/cifake/` e execute `python -m preparacao_dados.cifake inspect`. Esse comando protege o CSV de anotações existente contra sobrescrita. Um usuário autenticado pode obter o arquivo com a CLI Kaggle usando `kaggle datasets download -d birdy654/cifake-real-and-ai-generated-synthetic-images -v 3`.
-
-A metodologia futura utiliza FFT bidimensional, 16 intervalos radiais até 0,50 ciclos/pixel, cinco subfaixas entre 0,25 e 0,50, e Random Forest espacial, espectral e híbrido. Serão investigados JPEG 75 e 30, resize 32→24→32 e 32→16→32 e blur gaussiano com sigma 0,5 e 1,0. A resolução 32 × 32 limita a discriminação visual e a quantidade de frequências amostradas. O processo de geração e a seleção visual podem introduzir diferenças de conteúdo entre classes.
-
-## Priorização semântica e revisão humana
-
-A ferramenta auxiliar usa `cifar10_resnet20` pré-treinada em CIFAR-10, somente para priorizar a revisão de automóveis. A revisão do código é `786c16252c0fc58ee9adac063f8337cc4a7a497a`. Os pesos oficiais `cifar10_resnet20-4118986f.pt` têm SHA-256 `4118986f0df73003d572b0e397f0ac7b3f60af1f31aff3d2da164536e36f6ec8`. O código usado tem SHA-256 `885b8fd2ccfb8ee27c02d3a382e2951622fdcbc2af2bbca375aaf71d40f5f246`. A implementação verifica ambos os hashes. O treinamento publicado usa média RGB [0,4914, 0,4822, 0,4465] e desvio padrão [0,2023, 0,1994, 0,2010]. A imagem RGB permanece em 32 × 32, os valores são divididos por 255 e normalizados por canal. Automobile é a classe de índice 1. [Modelo e pesos oficiais](https://github.com/chenyaofo/pytorch-cifar-models/tree/786c16252c0fc58ee9adac063f8337cc4a7a497a) · [Configuração de treino](https://github.com/chenyaofo/image-classification-codebase/blob/master/conf/cifar10.conf)
-
-Em uma instalação nova, instale as dependências opcionais e obtenha a revisão e os pesos. Os arquivos permanecem na pasta ignorada `.venv`.
-
-```powershell
 .\.venv\Scripts\python.exe -m pip install -r requirements-semantic.txt
-curl.exe -L https://codeload.github.com/chenyaofo/pytorch-cifar-models/zip/786c16252c0fc58ee9adac063f8337cc4a7a497a -o .venv/cifar-model-source.zip
-Expand-Archive .venv/cifar-model-source.zip -DestinationPath .venv
-curl.exe -L https://github.com/chenyaofo/pytorch-cifar-models/releases/download/resnet/cifar10_resnet20-4118986f.pt -o .venv/cifar10_resnet20-4118986f.pt
-.\.venv\Scripts\python.exe -m preparacao_dados.selecao_semantica infer
-.\.venv\Scripts\python.exe -m preparacao_dados.selecao_semantica sheets
 ```
 
-A inferência usa CPU, lotes, `eval()` e `inference_mode()`. Os resultados em `resultados/cifake/predicoes_semanticas.csv` são estimativas e incluem posição e probabilidade de automobile. As folhas priorizam as imagens que colocam automobile entre as duas primeiras classes, embaralhadas com seed 42. Uma folha adicional reúne 25 imagens aleatórias não priorizadas de cada combinação de classe e partição. As folhas misturam classes e não mostram origem ou confiança. O mapa de associação fica em `resultados/cifake/mapa_revisao_semantica.csv`. Para preservar a associação, a ferramenta recusa regenerar predições ou folhas enquanto o mapa existir.
+O segundo arquivo é necessário para a ResNet-20 de priorização. Código e pesos adicionais da revisão `786c16252c0fc58ee9adac063f8337cc4a7a497a` devem estar nos caminhos previstos em `preparacao_dados/selecao_semantica.py`; a implementação verifica seus hashes. O arquivo de pesos `cifar10_resnet20-4118986f.pt` e o código do modelo devem ser obtidos do [projeto oficial](https://github.com/chenyaofo/pytorch-cifar-models/tree/786c16252c0fc58ee9adac063f8337cc4a7a497a).
 
-Para revisar, execute `.\.venv\Scripts\python.exe -m preparacao_dados.selecao_semantica review`. Abra no visualizador de imagens o caminho da folha exibida no terminal. Pressione Enter e informe os números dos automóveis de passeio reconhecíveis, separados por espaços ou vírgulas. Em seguida informe os números ambíguos. Os demais números recebem `nao`. Use `p` para pular e `q` para sair. Cada folha concluída é salva no CSV original e a execução seguinte retoma as folhas pendentes. Anotações existentes são preservadas. O comando `python -m preparacao_dados.selecao_semantica status` informa as cotas ainda pendentes por classe e partição.
+## Reprodução dos experimentos
 
-Aceite automóveis de passeio reconhecíveis. Caminhões, ônibus, motocicletas e veículos de outra categoria devem ser rejeitados. Marque como ambíguo quando não for possível identificar a categoria. Não use aparência realista, estética ou artefatos de IA como critério. Depois de confirmar pelo menos 120 imagens de cada classe no treino oficial e 30 de cada classe no teste oficial, execute `python -m preparacao_dados.cifake prepare`.
+O diretório `data/` é ignorado pelo Git. Obtenha a versão 3 do CIFAKE pela fonte indicada e extraia os diretórios oficiais em `data/raw/cifake/`, preservando nomes e bytes. Os CSVs de revisão e os mapas precisam estar disponíveis em `resultados/cifake/` e `resultados/melhorias/teste_independente/`; o manifesto independente também depende do protocolo e das anotações preservadas. A reconstrução é possível com esses arquivos e os dados originais íntegros, mas não há garantia de reprodução byte a byte dos modelos em ambientes ou versões diferentes. Confira os hashes registrados antes de reutilizá-los.
 
-A rede pode se comportar de modo diferente nas imagens reais e sintéticas. O treino do modelo em CIFAR-10 pode incluir imagens que originaram as imagens REAL de treinamento do CIFAKE. Suas previsões não constituem evidência independente da qualidade da seleção. A confiança da rede não deve ser usada como característica dos futuros detectores.
-
-## Análise exploratória de frequência
-
-A análise usa exclusivamente as 210 imagens do treino do manifesto CIFAKE. Para reproduzir:
+Os comandos abaixo usam `python` para representar o Python do ambiente virtual. **Leia os efeitos antes de executá-los:**
 
 ```powershell
-.\.venv\Scripts\python.exe -m pip install -r requirements.txt
-.\.venv\Scripts\python.exe -m unittest discover -s testes -v
-.\.venv\Scripts\python.exe -m analise_frequencias.explorar
+# Reconstruir a amostra inicial a partir das anotações existentes
+python -m preparacao_dados.cifake prepare
+
+# Análise e extração das características iniciais
+python -m analise_frequencias.explorar
+python -m extracao_caracteristicas.extrair --saida resultados/caracteristicas_reproducao
+
+# Preparação da amostra independente, seguida de revisão humana
+python -m preparacao_independente.preparar preparar
+python -m preparacao_independente.preparar revisar
+python -m preparacao_independente.preparar status
+python -m preparacao_independente.finalizar
+
+# Avaliação dos modelos congelados e consolidação
+python -m melhorias.avaliacao_independente --saida resultados/melhorias/teste_independente/avaliacao_reproducao
+python -m analise_resultados.consolidar --saida resultados/analise_final_reproducao
 ```
 
-Cada imagem é decodificada em RGB a 32 × 32, sem interpolação. A escala de cinza usa Y = 0,299 R + 0,587 G + 0,114 B, com canais float64 divididos por 255. Subtrai-se a média de Y e calcula-se F = fftshift(fft2(Y − média)). A potência é P = |F|². A grade utiliza fftfreq em ciclos/pixel, deslocada com fftshift, e r = √(fx² + fy²). A região analisada contém 0 < r ≤ 0,50. Excluem-se DC e os cantos com r > 0,50. A potência normalizada é P dividida pela soma de P na região, em escala linear.
+`cifake prepare` depende das anotações históricas e pode gravar no destino e resumo originais; faça backup antes. `analise_frequencias.explorar` sobrescreve `resultados/frequencias/`; a extração aceita `--saida`, mas grava nos arquivos desse destino. A preparação independente recusa candidatos existentes; a revisão altera o CSV de anotações e depende de intervenção humana; a finalização recusa destino existente e exige cotas e verificações de integridade. Avaliação e consolidação recusam pastas de saída existentes e exigem os manifestos, protocolo, modelos e resultados prévios.
 
-O perfil tem 16 intervalos de largura 1/32 entre 0 e 0,50. Cada intervalo inclui o limite inferior e exclui o superior, exceto o último, que inclui 0,50. O primeiro intervalo fica vazio porque DC é removida. Os campos desse intervalo ficam vazios no CSV e nulos nas estatísticas, sem dividir por zero. Imagens de energia nula são registradas no relatório e excluídas das estatísticas. A potência radial média é a soma da potência normalizada dos coeficientes de um intervalo dividida pela quantidade desses coeficientes. A energia integrada é essa soma, sem a divisão pela quantidade.
+Para reconstruir modelos e resultados intermediários, os pontos de entrada são `python -m treinamento.treinar`, `python -m experimentos.robustez`, `python -m melhorias.treinamento_robusto` e `python -m melhorias.treinamento_espectro_ampliado`. **Eles treinam ou avaliam novamente e sobrescrevem saídas em seus diretórios padrão**; preserve os artefatos antes de usá-los. A avaliação independente e a consolidação usam os modelos e predições congelados e não exigem novo treinamento.
 
-As energias somam coeficientes normalizados nas faixas E1 [0,25; 0,3125), E2 [0,3125; 0,375) e E3 [0,375; 0,50]. Etotal é a soma para [0,25; 0,50], e Ebelow corresponde a 0 < r < 0,25. O programa verifica a igualdade entre Etotal e E1 + E2 + E3. As estatísticas de classe usam desvio padrão amostral e quartis por interpolação linear.
-
-O controle pareado aplica JPEG em memória após a decodificação RGB, com qualidade 90, subsampling 0 (4:4:4), optimize e progressive desativados. Os arquivos originais são preservados. A recompressão não elimina necessariamente os efeitos da compressão histórica e não demonstra causalidade.
-
-`resultados/frequencias/` contém características por imagem, perfis individuais, estatísticas por classe e cenário e `resumo.json`, com hash do manifesto e parâmetros. Os sete gráficos em `figuras/` mostram exemplos e FFT, espectros bidimensionais médios, perfis radiais com dispersão, energias médias, boxplots, dispersão E1 × E3 e o controle JPEG. Espectros dos exemplos usam log(1 + potência) somente na visualização. O perfil e o espectro médio bidimensional exibem potência normalizada linear.
-
-A resolução limita a grade a passos de 1/32 ciclos/pixel e produz poucos coeficientes nas faixas. Sem janela espectral, as bordas podem causar leakage. A construção do CIFAKE, a compressão JPEG anterior e a seleção visual auxiliada por classificador podem introduzir diferenças entre classes. A análise é descritiva e usa apenas o treino para evitar seleção de parâmetros pelo teste.
-
-
-## Etapa 3: extração de características
-
-Estrutura principal: `preparacao_dados/` (preparação e seleção), `analise_frequencias/` (FFT e exploração), `extracao_caracteristicas/` (espaciais, espectrais e execução), `testes/` e `resultados/caracteristicas/`. Os dados brutos e o manifesto histórico GenImage mantêm seus caminhos originais.
-
-| Antes | Agora |
-| --- | --- |
-| `genimage_prep/` | `preparacao_dados/` |
-| `images.py`, `prepare.py`, `sources.py` | `imagens.py`, `preparar.py`, `fontes.py` |
-| `category_inventory.py`, `semantic.py` | `inventario_categorias.py`, `selecao_semantica.py` |
-| `frequency_analysis/`, `spectrum.py`, `explore.py` | `analise_frequencias/`, `espectro.py`, `explorar.py` |
-| `test_category_inventory.py`, `test_prepare.py`, `test_semantic.py`, `test_spectrum.py` | `test_inventario_categorias.py`, `test_preparacao.py`, `test_selecao_semantica.py`, `test_espectro.py` |
-
-Execute na raiz, depois de instalar `requirements.txt`:
-
-```powershell
-.\.venv\Scripts\python.exe -m unittest discover -s testes -v
-.\.venv\Scripts\python.exe -m extracao_caracteristicas.extrair
-.\.venv\Scripts\python.exe -m extracao_caracteristicas.extrair --saida resultados/caracteristicas_verificacao
-```
-
-O módulo `extracao_caracteristicas.extrair(imagem)` recebe uma imagem Pillow ou array RGB 32 × 32: inteiros entre 0 e 255 ou float entre 0 e 1. Não redimensiona nem altera os arquivos. A ordem fixa está nas constantes `NOMES_ESPACIAIS`, `NOMES_ESPECTRAIS` e `NOMES_HIBRIDOS` e no relatório.
-
-As 40 características espaciais são: médias RGB (3), desvios padrão populacionais RGB (3), histogramas RGB (24; oito intervalos de largura 1/8, último incluindo 1, divididos por 1024), correlações Pearson RG, RB, GB (3), médias de diferenças absolutas horizontais e verticais por canal (6), e variância populacional do Laplaciano (1). Se um canal é constante, a correlação envolvendo-o é definida como zero. Diferenças usam somente vizinhos existentes. O Laplaciano usa cinza Y = 0,299 R + 0,587 G + 0,114 B na escala [0,1], kernel `[[0,1,0],[1,-4,1],[0,1,0]]` e extensão por repetição da borda.
-
-As 3 características espectrais E1, E2 e E3 reutilizam a FFT e as faixas da Etapa 2 descritas acima. Em energia nula, a FFT anterior retorna `None`; o vetor espectral aqui é definido como zero e os IDs são registrados no relatório. Etotal não é entrada porque é exatamente E1 + E2 + E3; Ebelow também é dependente quando a energia normalizada é não nula. A abordagem híbrida concatena as 40 espaciais e as 3 espectrais, nessa ordem.
-
-Os três CSVs em `resultados/caracteristicas/` preservam a ordem do manifesto e contêm `image_id`, `class`, `experimental_split` e apenas as características da abordagem. Esses três metadados não são entradas para o classificador. O relatório JSON registra parâmetros, dimensões, hash, verificações, energias nulas e pares com |Pearson| ≥ 0,95; `estatisticas_treino.csv` resume somente o treino. Não há eliminação automática, normalização ajustada, comparação de classes na validação nem treinamento. As 60 imagens de teste continuam reservadas. As características são sensíveis ao conteúdo e à compressão, o conjunto é pequeno e limitado a automóveis CIFAKE, e correlações observadas no treino não demonstram generalização. Qualquer ajuste futuro deve usar exclusivamente treino e evitar vazamento entre partições.
-
-O relatório de preparação registra agora 359 anotações `sim` no CSV de revisão, das quais 300 foram selecionadas; o valor anteriormente registrado (zero) é preservado como histórico.
-
-
-## Caminhos após a padronização
+## Estrutura de diretórios
 
 ```text
-preparacao_dados/       imagens.py, preparar.py, fontes.py, inventario_categorias.py, selecao_semantica.py, cifake.py
-analise_frequencias/    espectro.py, explorar.py
-extracao_caracteristicas/  espaciais.py, espectrais.py, extrair.py
-testes/                 test_*.py
-data/raw/cifake/        dados originais referenciados pelos CSVs históricos
-data/prepared/smoke/    manifesto e imagens históricos GenImage
-data/preparados/cifake/ manifest.csv e originals/
-resultados/cifake/      seleção, inventário, predições, mapa e folhas
-resultados/frequencias/ CSVs, resumo.json e figuras/
-resultados/caracteristicas/ CSVs e relatorio.json
+preparacao_dados/          preparação CIFAKE e ferramentas históricas GenImage
+analise_frequencias/       FFT e exploração radial
+extracao_caracteristicas/  características espaciais e espectrais originais
+treinamento/               treinamento e métricas dos modelos iniciais
+experimentos/              transformações e robustez inicial
+melhorias/                 aumento, espectro ampliado e avaliação independente
+preparacao_independente/   candidatos, revisão e finalização
+analise_resultados/        consolidação, ablação e bootstrap
+testes/                    testes automatizados
+resultados/                resultados e relatórios por etapa
+documentacao/              histórico GenImage
+data/                      dados locais ignorados pelo Git
 ```
 
-Os caminhos `data/raw/` constam nos CSVs de seleção, predição e revisão e foram mantidos para que continuem resolvíveis. O resumo histórico GenImage aponta para `data/prepared/smoke/`; esse caminho também permanece. `originals/` é parte dos caminhos relativos dos manifestos, cujos bytes não foram modificados. Por isso a raiz `data/` permanece ignorada pelo Git. O manifesto CIFAKE foi movido junto de sua pasta sem alteração de conteúdo. Nomes em inglês registrados nos CSVs, rótulos oficiais e resultados históricos não foram traduzidos.
-
-
-## Etapa 4: treinamento e validação
-
-Três Random Forest independentes combinam votos de 300 árvores ajustadas somente ao treino. Seus vetores são respectivamente espaciais (40), espectrais (E1, E2, E3) e híbridos (43); identificadores, rótulos e partições não são entradas. Não há normalização nem busca de parâmetros. A configuração em `config.yaml` usa 300 árvores, profundidade 6, min_samples_split 4, min_samples_leaf 2, max_features 1.0, critério gini, bootstrap, seed 42 e n_jobs -1.
-
-```powershell
-.\.venv\Scripts\python.exe -m pip install -r requirements.txt
-.\.venv\Scripts\python.exe -m unittest discover -s testes -v
-.\.venv\Scripts\python.exe -m treinamento.treinar
-```
-
-O comando ajusta os modelos com 210 imagens e avalia as 30 imagens de validação. Os arquivos de `resultados/treinamento/` incluem modelos joblib, predições, métricas, importâncias, gráficos e relatório com hashes, versões e ordem das entradas. A avaliação é executada pelo próprio comando de treinamento. Modelos joblib só devem ser carregados de fontes confiáveis e com versões compatíveis.
-
-FAKE é positiva. A matriz usa linhas verdadeiras e colunas previstas na ordem REAL, FAKE. Acurácia = (VP+VN)/N; precisão = VP/(VP+FP); recall = VP/(VP+FN); especificidade = VN/(VN+FP); F1 = 2VP/(2VP+FP+FN). Denominadores zero produzem 0. A decisão padrão escolhe a classe com maior probabilidade; empates favorecem REAL, a primeira classe. As probabilidades em paralelo podem variar em arredondamento; o recarregamento verifica classes exatas e probabilidades com tolerância absoluta 1e-14.
-
-As métricas de treino não são independentes. O treino é pequeno e a validação tem apenas 30 imagens; todas são automóveis 32 × 32. Compressão e construção do CIFAKE podem influenciar resultados. Importâncias por impureza são afetadas por correlação e não implicam causalidade. O resultado preliminar não comprova robustez ou generalização a outros datasets.
-
-
-## Etapa 5: robustez no teste
-
-Execute `python -m experimentos.robustez` na raiz com o ambiente virtual ativo. A execução carrega os modelos congelados, verifica seus hashes e o manifesto e sobrescreve os resultados em `resultados/robustez/`. As 60 imagens reservadas são avaliadas nos sete cenários, sem novo treinamento ou ajuste de limiar.
-
-Cada transformação parte da imagem RGB original: `original`; `jpeg_75` e `jpeg_30`, em memória, qualidade 75 ou 30, subsampling 0, optimize e progressive desativados; `resize_75` e `resize_50`, redução Lanczos a 24 ou 16 pixels seguida de retorno bilinear a 32; `blur_05` e `blur_10`, filtro gaussiano SciPy com sigma 0,5 ou 1,0, bordas reflect, truncate 4 e sem misturar canais. O blur é arredondado para uint8. O retorno ao tamanho original não recupera informação perdida; imagens originais já têm compressão JPEG histórica.
-
-Os CSVs registram características, 1.260 predições, métricas, variações e resumo; `parametros.json` registra configurações antes da avaliação, e `relatorio.json` registra hashes e duração. `figuras/` contém comparações, exemplos e matrizes. Variações são transformado menos original; acerto para erro, erro para acerto e mudança de previsão são pareados por ID. F1 médio e pior F1 usam apenas os seis cenários transformados.
-
-As imagens derivadas dependem das mesmas 60 originais e não são observações independentes. A baixa resolução, o tamanho do teste, a seleção semântica assistida e possíveis vieses da construção do CIFAKE limitam a interpretação. Não é possível generalizar diretamente a outros geradores e categorias.
-
-
-## Etapa 5.1: aumento de dados
-
-O experimento compara três florestas originais com três florestas treinadas a partir de 210 imagens de treino e seis transformações independentes por imagem (1.470 instâncias). As mesmas transformações da Etapa 5 são aplicadas a 30 imagens de validação para uma comparação pareada. Identificadores e cenários são metadados, não entradas; a partição de teste não é usada. Os hiperparâmetros são idênticos aos anteriores.
-
-[Wang et al. (2020)](https://openaccess.thecvf.com/content_CVPR_2020/html/Wang_CNN-Generated_Images_Are_Surprisingly_Easy_to_Spot..._for_Now_CVPR_2020_paper.html) investigam aumento com pós-processamento em um detector baseado em rede neural. Aqui adaptamos o princípio para Random Forest e características manuais; não reproduzimos integralmente o artigo.
+## Testes automatizados
 
 ```powershell
 .\.venv\Scripts\python.exe -m unittest discover -s testes -v
-.\.venv\Scripts\python.exe -m melhorias.treinamento_robusto
 ```
 
-As saídas ficam em `resultados/melhorias/aumento_dados/`: características por origem e cenário, modelos separados, métricas, predições, comparação, figuras e relatório. O comando substitui as saídas dessa pasta, preservando os experimentos anteriores. As sete versões de cada imagem não são observações independentes. Os resultados na validação são exploratórios; a avaliação final das melhorias requer nova amostra independente do CIFAKE, distinta das já usadas.
+Na última execução, **48 testes passaram**. Eles cobrem processamento, características, partições, integridade, métricas e bootstrap. Alguns testes existentes ajustam pequenos classificadores temporários; não substituem os dez modelos experimentais.
 
+## Limitações
 
-## Etapa 5.2: espectro ampliado
+O treino é pequeno, a validação tem apenas 30 imagens e a resolução de 32 × 32 limita a análise. Há uma única categoria semântica, um gerador específico, JPEG histórico, possíveis vieses do CIFAKE e seleção semântica assistida. As variantes de uma imagem não são independentes. As transformações avaliadas são conhecidas pelos modelos aumentados; o estudo não demonstra robustez a transformações inéditas nem generalização direta a outros datasets ou geradores. Falsos positivos podem contestar imagens autênticas; falsos negativos podem aceitar imagens sintéticas como autênticas.
 
-A representação ampliada investiga a distribuição de energia abaixo de 0,25 ciclos/pixel e a forma global do espectro. A FFT, remoção da média, exclusão de DC e de raios acima de 0,5 e normalização permanecem as da Etapa 2. As faixas são B1 (0; 0,0625), B2 [0,0625; 0,125), B3 [0,125; 0,1875), B4 [0,1875; 0,25), E1 [0,25; 0,3125), E2 [0,3125; 0,375), E3 [0,375; 0,5].
+## Trabalhos futuros
 
-O centroide é C = soma(r_i p_i); a entropia normalizada é H = -soma(p_i ln p_i)/ln K, com 0 ln 0 = 0 e K coeficientes da região. Para energia nula, todas as oito entradas e B1 são zero, conforme a convenção da etapa anterior. A ordem é E1, E2, E3, B2, B3, B4, centroide, entropia. B1 é diagnóstico: as sete energias somam 1 quando a energia é não nula. Etotal é a soma de E1, E2 e E3. As dimensões são 8 no espectral e 48 no híbrido ampliados; os vetores antigos não mudam.
+- Organizar o CIFAKE em múltiplos subconjuntos semânticos e comparar classificadores específicos por categoria, generalização entre categorias e classificadores generalistas.
+- Investigar Late Fusion, transformações não utilizadas no treinamento e imagens de maior resolução.
 
-A ablação compara aumento de dados, ampliação espectral e modelo espacial, pareando identificadores em cada cenário. As saídas em `resultados/melhorias/espectro_ampliado/` incluem modelos, características, diagnósticos do treino, métricas, predições, ablação, figuras e relatório. A análise das distribuições usa somente treino; as métricas usam validação.
+## Referências
 
-```powershell
-.\.venv\Scripts\python.exe -m unittest discover -s testes -v
-.\.venv\Scripts\python.exe -m melhorias.treinamento_espectro_ampliado
-```
-
-O comando substitui apenas as saídas desta etapa. A grade 32 × 32 limita a resolução de frequências; variantes da mesma imagem não são independentes. A validação é exploratória e a avaliação repetida de melhorias nela pode adaptar escolhas à amostra. A avaliação final exige nova amostra independente do próprio CIFAKE.
-
-
-## Preparacao de amostra independente
-
-A selecao usa apenas o teste oficial CIFAKE, seed 43, exclui por identificador e SHA-256 as 4.000 imagens da selecao anterior e as 300 imagens experimentais. O sorteio seleciona 1.000 candidatos por classe; a ResNet-20 anterior prioriza candidatos com automobile entre as duas primeiras classes, e uma auditoria aleatoria inclui 25 candidatos nao priorizados por classe. As folhas ocultam classe e confianca; somente revisao humana confirma automoveis de passeio.
-
-```powershell
-.\.venv\Scripts\python.exe -m preparacao_independente.preparar revisar
-.\.venv\Scripts\python.exe -m preparacao_independente.preparar status
-```
-
-Em cada folha, informe os numeros aceitos e depois os ambiguos; os demais recebem `nao`. `p` pula e `q` encerra, preservando anotacoes. Arquivos, mapa e folhas ficam em `resultados/melhorias/teste_independente/`. O protocolo congelado antecede a avaliacao e nao executa detectores; as transformacoes futuras sao conhecidas pelo treino aumentado, portanto a avaliacao mede generalizacao a novas imagens, nao necessariamente a transformacoes ineditas.
-
-Duplicatas exatas sao excluidas por SHA-256. A triagem perceptual usa dHash em escala de cinza de 64 bits com distancia de Hamming ate 3, entre os 2.000 candidatos e entre eles e as 300 imagens anteriores. Ela pode deixar passar duplicatas; qualquer par apontado deve ser revisado. A selecao definitiva depende de revisao, cotas suficientes e verificacao de suspeitos; nao ha manifesto definitivo enquanto essas condicoes nao forem cumpridas.
-
-
-## Etapa 5.5B: avaliacao independente
-
-A amostra de 120 automoveis foi sorteada com seed 43 entre as anotacoes humanas confirmadas: 60 REAL e 60 FAKE, provenientes do teste oficial CIFAKE. Excluem-se os identificadores e hashes da amostra de desenvolvimento e dos candidatos historicos. Cada copia preserva os bytes JPEG e o manifesto independente registra seu SHA-256. O procedimento confere dHash com distancia de Hamming ate 3 entre as selecionadas e contra as 300 imagens anteriores; nao detectar pares suspeitos nao garante ausencia de duplicatas perceptuais.
-
-Os dez modelos congelados sao avaliados em sete cenarios sobre as mesmas imagens. As 840 instancias derivam de 120 originais e nao sao independentes. O F1 medio dos seis cenarios transformados e a metrica principal. Variacoes e ablacoes sao pareadas por identificador, e a pasta `resultados/melhorias/teste_independente/avaliacao/` contem caracteristicas, predicoes, metricas, resumo, ablacao, graficos e relatorio. A integridade dos modelos, manifestos e anotacoes e verificada antes da avaliacao; uma pasta de saida existente nao e sobrescrita.
-
-```powershell
-.\.venv\Scripts\python.exe -m unittest discover -s testes -v
-.\.venv\Scripts\python.exe -m melhorias.avaliacao_independente --saida resultados/melhorias/teste_independente/avaliacao_reproducao
-```
-
-A selecao semantica assistida pode introduzir vieses. As novas imagens sao independentes das usadas no desenvolvimento, mas pertencem ao mesmo dataset e dominio de automoveis. As transformacoes sao conhecidas pelos modelos aumentados; os resultados nao demonstram robustez a transformacoes ineditas e nao podem ser generalizados diretamente a outros datasets ou geradores. Diferencas pequenas nao demonstram superioridade estatistica; a analise estatistica complementar fica para a Etapa 6.
-
-
-## Etapa 6: consolidacao e incerteza
-
-A analise recalcula as 70 combinacoes independentes a partir das 8.400 predicoes, confere hashes e preserva os experimentos de teste inicial, validacao e teste independente em tabelas separadas. O bootstrap usa 10.000 amostras, seed 42, com 60 identificadores REAL e 60 FAKE sorteados com reposicao. O mesmo sorteio de imagens e usado para todos os modelos e cenarios; os intervalos percentis de 95% das diferencas sao calculados diretamente das diferencas pareadas.
-
-```powershell
-.\.venv\Scripts\python.exe -m unittest discover -s testes -v
-.\.venv\Scripts\python.exe -m analise_resultados.consolidar --saida resultados/analise_final_reproducao
-```
-
-As tabelas, figuras, sintese e relatorio ficam em `resultados/analise_final/`. A reproducao exige nova pasta para preservar os resultados existentes. Os intervalos sao condicionais aos modelos treinados e nao incorporam variacao de treinamento. Analises multiplas sao exploratorias; intervalo contendo zero nao prova equivalencia. O teste independente compartilha CIFAKE, categoria e transformacoes conhecidas; nao comprova generalizacao a outros dominios ou transformacoes ineditas.
+- Bird e Lotfi. [CIFAKE: Image Classification and Explainable Identification of AI-Generated Synthetic Images](https://doi.org/10.1109/ACCESS.2024.3356122).
+- Wang et al. [CNN-Generated Images Are Surprisingly Easy to Spot... for Now](https://openaccess.thecvf.com/content_CVPR_2020/html/Wang_CNN-Generated_Images_Are_Surprisingly_Easy_to_Spot..._for_Now_CVPR_2020_paper.html), CVPR 2020.
+- [Código e pesos da ResNet para CIFAR-10](https://github.com/chenyaofo/pytorch-cifar-models/tree/786c16252c0fc58ee9adac063f8337cc4a7a497a).
