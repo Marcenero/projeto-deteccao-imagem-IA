@@ -1,0 +1,261 @@
+{
+  "parametros": {
+    "n_estimators": 300,
+    "max_depth": 6,
+    "min_samples_split": 4,
+    "min_samples_leaf": 2,
+    "max_features": 1.0,
+    "criterion": "gini",
+    "bootstrap": true,
+    "random_state": 42,
+    "n_jobs": -1
+  },
+  "classes": {
+    "0": "REAL",
+    "1": "FAKE"
+  },
+  "manifesto_sha256": "6df4a531c3af61590b6f1e23c1ea99e24eebea452c7cc8e46686a96c8a764e2c",
+  "csv_sha256": {
+    "espacial": "c8d1bbda90c72eb81cf4325faa2f26df978b2f221b04aa8e49e3caf7de7cce4c",
+    "espectral": "99964bf201a47efc2e4398707f4141166ccc152172e0723536fc42b1b62577c8",
+    "hibrido": "4d5a3dafce3617783e41516a807d1f628b7c715d48439ed88ce4a2f475eda755"
+  },
+  "versoes": {
+    "python": "3.12.6",
+    "scikit_learn": "1.9.1",
+    "joblib": "1.6.0",
+    "numpy": "2.5.5",
+    "matplotlib": "3.10.8"
+  },
+  "modelos": {
+    "espacial": {
+      "tempo_segundos": 0.5716743000000406,
+      "sha256": "151b03b82e95c7b0d8fbf676f02b1e7cf93248c96da658e297f182de03af4b56",
+      "arquivo": "resultados\\treinamento\\modelos\\modelo_espacial.joblib",
+      "caracteristicas": [
+        "media_r",
+        "media_g",
+        "media_b",
+        "desvio_r",
+        "desvio_g",
+        "desvio_b",
+        "hist_r_0",
+        "hist_r_1",
+        "hist_r_2",
+        "hist_r_3",
+        "hist_r_4",
+        "hist_r_5",
+        "hist_r_6",
+        "hist_r_7",
+        "hist_g_0",
+        "hist_g_1",
+        "hist_g_2",
+        "hist_g_3",
+        "hist_g_4",
+        "hist_g_5",
+        "hist_g_6",
+        "hist_g_7",
+        "hist_b_0",
+        "hist_b_1",
+        "hist_b_2",
+        "hist_b_3",
+        "hist_b_4",
+        "hist_b_5",
+        "hist_b_6",
+        "hist_b_7",
+        "corr_rg",
+        "corr_rb",
+        "corr_gb",
+        "dif_horizontal_r",
+        "dif_horizontal_g",
+        "dif_horizontal_b",
+        "dif_vertical_r",
+        "dif_vertical_g",
+        "dif_vertical_b",
+        "variancia_laplaciano"
+      ],
+      "recarregamento_identico": true
+    },
+    "espectral": {
+      "tempo_segundos": 0.4985679000001255,
+      "sha256": "3abb1bb2d217bede54d34ca9c28635fd9cc4874fdae1a4977ab357c3703b4005",
+      "arquivo": "resultados\\treinamento\\modelos\\modelo_espectral.joblib",
+      "caracteristicas": [
+        "E1",
+        "E2",
+        "E3"
+      ],
+      "recarregamento_identico": true
+    },
+    "hibrido": {
+      "tempo_segundos": 0.5673335999999836,
+      "sha256": "ace57651059dcdc4c0edc9e031f259629d51fa63d13f70dc0690dec4fd744dfa",
+      "arquivo": "resultados\\treinamento\\modelos\\modelo_hibrido.joblib",
+      "caracteristicas": [
+        "media_r",
+        "media_g",
+        "media_b",
+        "desvio_r",
+        "desvio_g",
+        "desvio_b",
+        "hist_r_0",
+        "hist_r_1",
+        "hist_r_2",
+        "hist_r_3",
+        "hist_r_4",
+        "hist_r_5",
+        "hist_r_6",
+        "hist_r_7",
+        "hist_g_0",
+        "hist_g_1",
+        "hist_g_2",
+        "hist_g_3",
+        "hist_g_4",
+        "hist_g_5",
+        "hist_g_6",
+        "hist_g_7",
+        "hist_b_0",
+        "hist_b_1",
+        "hist_b_2",
+        "hist_b_3",
+        "hist_b_4",
+        "hist_b_5",
+        "hist_b_6",
+        "hist_b_7",
+        "corr_rg",
+        "corr_rb",
+        "corr_gb",
+        "dif_horizontal_r",
+        "dif_horizontal_g",
+        "dif_horizontal_b",
+        "dif_vertical_r",
+        "dif_vertical_g",
+        "dif_vertical_b",
+        "variancia_laplaciano",
+        "E1",
+        "E2",
+        "E3"
+      ],
+      "recarregamento_identico": true
+    }
+  },
+  "metricas": {
+    "treino": [
+      {
+        "modelo": "espacial",
+        "acuracia": 1.0,
+        "precisao": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
+        "especificidade": 1.0,
+        "matriz_confusao": [
+          [
+            105,
+            0
+          ],
+          [
+            0,
+            105
+          ]
+        ]
+      },
+      {
+        "modelo": "espectral",
+        "acuracia": 0.9285714285714286,
+        "precisao": 0.9326923076923077,
+        "recall": 0.9238095238095239,
+        "f1": 0.9282296650717703,
+        "especificidade": 0.9333333333333333,
+        "matriz_confusao": [
+          [
+            98,
+            7
+          ],
+          [
+            8,
+            97
+          ]
+        ]
+      },
+      {
+        "modelo": "hibrido",
+        "acuracia": 0.9904761904761905,
+        "precisao": 0.9813084112149533,
+        "recall": 1.0,
+        "f1": 0.9905660377358491,
+        "especificidade": 0.9809523809523809,
+        "matriz_confusao": [
+          [
+            103,
+            2
+          ],
+          [
+            0,
+            105
+          ]
+        ]
+      }
+    ],
+    "validacao": [
+      {
+        "modelo": "espacial",
+        "acuracia": 0.7333333333333333,
+        "precisao": 0.7333333333333333,
+        "recall": 0.7333333333333333,
+        "f1": 0.7333333333333333,
+        "especificidade": 0.7333333333333333,
+        "matriz_confusao": [
+          [
+            11,
+            4
+          ],
+          [
+            4,
+            11
+          ]
+        ]
+      },
+      {
+        "modelo": "espectral",
+        "acuracia": 0.6666666666666666,
+        "precisao": 0.6923076923076923,
+        "recall": 0.6,
+        "f1": 0.6428571428571429,
+        "especificidade": 0.7333333333333333,
+        "matriz_confusao": [
+          [
+            11,
+            4
+          ],
+          [
+            6,
+            9
+          ]
+        ]
+      },
+      {
+        "modelo": "hibrido",
+        "acuracia": 0.7333333333333333,
+        "precisao": 0.7692307692307693,
+        "recall": 0.6666666666666666,
+        "f1": 0.7142857142857143,
+        "especificidade": 0.8,
+        "matriz_confusao": [
+          [
+            12,
+            3
+          ],
+          [
+            5,
+            10
+          ]
+        ]
+      }
+    ]
+  },
+  "importancia_hibrida_por_grupo": {
+    "espaciais": 0.8170923604145578,
+    "espectrais": 0.18290763958544218
+  },
+  "observacoes": "FAKE positiva; divisao por zero retorna 0; predict padrao desempata em favor da primeira classe (REAL); treino nao e avaliacao independente."
+}

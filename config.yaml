@@ -30,3 +30,13 @@ cifake:
     jpeg_quality: [75, 30]
     resize: [24, 16]
     gaussian_sigma: [0.5, 1.0]
+random_forest:
+  n_estimators: 300
+  max_depth: 6
+  min_samples_split: 4
+  min_samples_leaf: 2
+  max_features: 1.0
+  criterion: gini
+  bootstrap: true
+  random_state: 42
+  n_jobs: -1

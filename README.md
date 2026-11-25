@@ -181,3 +181,20 @@ resultados/caracteristicas/ CSVs e relatorio.json
 ```
 
 Os caminhos `data/raw/` constam nos CSVs de seleção, predição e revisão e foram mantidos para que continuem resolvíveis. O resumo histórico GenImage aponta para `data/prepared/smoke/`; esse caminho também permanece. `originals/` é parte dos caminhos relativos dos manifestos, cujos bytes não foram modificados. Por isso a raiz `data/` permanece ignorada pelo Git. O manifesto CIFAKE foi movido junto de sua pasta sem alteração de conteúdo. Nomes em inglês registrados nos CSVs, rótulos oficiais e resultados históricos não foram traduzidos.
+
+
+## Etapa 4: treinamento e validação
+
+Três Random Forest independentes combinam votos de 300 árvores ajustadas somente ao treino. Seus vetores são respectivamente espaciais (40), espectrais (E1, E2, E3) e híbridos (43); identificadores, rótulos e partições não são entradas. Não há normalização nem busca de parâmetros. A configuração em `config.yaml` usa 300 árvores, profundidade 6, min_samples_split 4, min_samples_leaf 2, max_features 1.0, critério gini, bootstrap, seed 42 e n_jobs -1.
+
+```powershell
+.\.venv\Scripts\python.exe -m pip install -r requirements.txt
+.\.venv\Scripts\python.exe -m unittest discover -s testes -v
+.\.venv\Scripts\python.exe -m treinamento.treinar
+```
+
+O comando ajusta os modelos com 210 imagens e avalia as 30 imagens de validação. Os arquivos de `resultados/treinamento/` incluem modelos joblib, predições, métricas, importâncias, gráficos e relatório com hashes, versões e ordem das entradas. A avaliação é executada pelo próprio comando de treinamento. Modelos joblib só devem ser carregados de fontes confiáveis e com versões compatíveis.
+
+FAKE é positiva. A matriz usa linhas verdadeiras e colunas previstas na ordem REAL, FAKE. Acurácia = (VP+VN)/N; precisão = VP/(VP+FP); recall = VP/(VP+FN); especificidade = VN/(VN+FP); F1 = 2VP/(2VP+FP+FN). Denominadores zero produzem 0. A decisão padrão escolhe a classe com maior probabilidade; empates favorecem REAL, a primeira classe. As probabilidades em paralelo podem variar em arredondamento; o recarregamento verifica classes exatas e probabilidades com tolerância absoluta 1e-14.
+
+As métricas de treino não são independentes. O treino é pequeno e a validação tem apenas 30 imagens; todas são automóveis 32 × 32. Compressão e construção do CIFAKE podem influenciar resultados. Importâncias por impureza são afetadas por correlação e não implicam causalidade. O resultado preliminar não comprova robustez ou generalização a outros datasets.
