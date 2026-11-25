@@ -13,3 +13,20 @@ profiles:
 
 output_dir: data/prepared
 summary_path: results/dataset_summary.json
+cifake:
+  dataset: CIFAKE
+  generator: Stable Diffusion 1.4
+  category: automobile
+  image_size: [32, 32]
+  classes: {REAL: 0, FAKE: 1}
+  per_class: {train: 105, validation: 15, test: 30}
+  seed: 42
+  contact_candidates: {train: 1500, test: 500}
+  frequency_range: [0.25, 0.50]
+  radial_bins: 16
+  energy_bands: [0.25, 0.30, 0.35, 0.40, 0.45, 0.50]
+  classifiers: [random_forest_spatial, random_forest_spectral, random_forest_hybrid]
+  transformations:
+    jpeg_quality: [75, 30]
+    resize: [24, 16]
+    gaussian_sigma: [0.5, 1.0]

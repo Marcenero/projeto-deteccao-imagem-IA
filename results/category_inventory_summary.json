@@ -1,0 +1,17 @@
+{
+  "status": "incomplete",
+  "revision": "3f4b9f921a673be09a93b335ed728cea0c6ecf33",
+  "classes": 1000,
+  "unidentified_real_evaluation_images": {
+    "test": 6000
+  },
+  "limitations": [
+    "Correspondência do prefixo sintético com o índice ImageNet não confirmada.",
+    "A categoria das imagens reais de avaliação não está nos nomes do índice.",
+    "Recuperação seletiva de registros Arrow não validada."
+  ],
+  "sources": {
+    "imagenet": "https://storage.googleapis.com/download.tensorflow.org/data/imagenet_class_index.json",
+    "dataset": "https://huggingface.co/datasets/nebula/GenImage-arrow"
+  }
+}

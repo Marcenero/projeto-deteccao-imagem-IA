@@ -1,0 +1,46 @@
+{
+  "dataset": "CIFAKE",
+  "kaggle_version": 3,
+  "total_valid": 120000,
+  "invalid_count": 0,
+  "invalid": [],
+  "distribution": [
+    {
+      "split": "test",
+      "class": "FAKE",
+      "resolution": "32x32",
+      "format": "JPEG",
+      "count": 10000
+    },
+    {
+      "split": "test",
+      "class": "REAL",
+      "resolution": "32x32",
+      "format": "JPEG",
+      "count": 10000
+    },
+    {
+      "split": "train",
+      "class": "FAKE",
+      "resolution": "32x32",
+      "format": "JPEG",
+      "count": 50000
+    },
+    {
+      "split": "train",
+      "class": "REAL",
+      "resolution": "32x32",
+      "format": "JPEG",
+      "count": 50000
+    }
+  ],
+  "selection_status": "awaiting_human_review",
+  "selection_rows": 4000,
+  "seed": 42,
+  "semantic_labels": "not provided in directory structure",
+  "duplicate_content_instances": 1336,
+  "archive_size_bytes": 109625224,
+  "uncompressed_size_bytes": 110717853,
+  "archive_sha256": "1839206c1462371f5c885eda1660b448ea7abf52ee81fcc71e5e4651a4a11389",
+  "confirmed_semantic_count": 0
+}

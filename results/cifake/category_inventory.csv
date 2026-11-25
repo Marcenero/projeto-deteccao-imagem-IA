@@ -1,0 +1,5 @@
+split,class,resolution,format,count
+test,FAKE,32x32,JPEG,10000
+test,REAL,32x32,JPEG,10000
+train,FAKE,32x32,JPEG,50000
+train,REAL,32x32,JPEG,50000
