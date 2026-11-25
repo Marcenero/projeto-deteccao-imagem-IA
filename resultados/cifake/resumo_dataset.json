@@ -34,7 +34,7 @@
       "count": 50000
     }
   ],
-  "selection_status": "awaiting_human_review",
+  "selection_status": "complete",
   "selection_rows": 4000,
   "seed": 42,
   "semantic_labels": "not provided in directory structure",
@@ -42,5 +42,22 @@
   "archive_size_bytes": 109625224,
   "uncompressed_size_bytes": 110717853,
   "archive_sha256": "1839206c1462371f5c885eda1660b448ea7abf52ee81fcc71e5e4651a4a11389",
-  "confirmed_semantic_count": 0
+  "confirmed_semantic_count": 359,
+  "confirmed_selected": 300,
+  "experimental_counts": {
+    "train": {
+      "0": 105,
+      "1": 105
+    },
+    "validation": {
+      "0": 15,
+      "1": 15
+    },
+    "test": {
+      "0": 30,
+      "1": 30
+    }
+  },
+  "confirmed_semantic_count_anterior": 0,
+  "confirmed_semantic_count_nota": "Valor anterior registrado no relat?rio; contagem atual de respostas sim em category_selection.csv."
 }

@@ -1,0 +1,198 @@
+{
+  "manifesto_sha256": "6df4a531c3af61590b6f1e23c1ea99e24eebea452c7cc8e46686a96c8a764e2c",
+  "imagens": 240,
+  "contagens": {
+    "train_0": 105,
+    "train_1": 105,
+    "validation_0": 15,
+    "validation_1": 15
+  },
+  "dimensoes": {
+    "espaciais": 40,
+    "espectrais": 3,
+    "hibridas": 43
+  },
+  "ordem": {
+    "espaciais": [
+      "media_r",
+      "media_g",
+      "media_b",
+      "desvio_r",
+      "desvio_g",
+      "desvio_b",
+      "hist_r_0",
+      "hist_r_1",
+      "hist_r_2",
+      "hist_r_3",
+      "hist_r_4",
+      "hist_r_5",
+      "hist_r_6",
+      "hist_r_7",
+      "hist_g_0",
+      "hist_g_1",
+      "hist_g_2",
+      "hist_g_3",
+      "hist_g_4",
+      "hist_g_5",
+      "hist_g_6",
+      "hist_g_7",
+      "hist_b_0",
+      "hist_b_1",
+      "hist_b_2",
+      "hist_b_3",
+      "hist_b_4",
+      "hist_b_5",
+      "hist_b_6",
+      "hist_b_7",
+      "corr_rg",
+      "corr_rb",
+      "corr_gb",
+      "dif_horizontal_r",
+      "dif_horizontal_g",
+      "dif_horizontal_b",
+      "dif_vertical_r",
+      "dif_vertical_g",
+      "dif_vertical_b",
+      "variancia_laplaciano"
+    ],
+    "espectrais": [
+      "E1",
+      "E2",
+      "E3"
+    ],
+    "hibridas": [
+      "media_r",
+      "media_g",
+      "media_b",
+      "desvio_r",
+      "desvio_g",
+      "desvio_b",
+      "hist_r_0",
+      "hist_r_1",
+      "hist_r_2",
+      "hist_r_3",
+      "hist_r_4",
+      "hist_r_5",
+      "hist_r_6",
+      "hist_r_7",
+      "hist_g_0",
+      "hist_g_1",
+      "hist_g_2",
+      "hist_g_3",
+      "hist_g_4",
+      "hist_g_5",
+      "hist_g_6",
+      "hist_g_7",
+      "hist_b_0",
+      "hist_b_1",
+      "hist_b_2",
+      "hist_b_3",
+      "hist_b_4",
+      "hist_b_5",
+      "hist_b_6",
+      "hist_b_7",
+      "corr_rg",
+      "corr_rb",
+      "corr_gb",
+      "dif_horizontal_r",
+      "dif_horizontal_g",
+      "dif_horizontal_b",
+      "dif_vertical_r",
+      "dif_vertical_g",
+      "dif_vertical_b",
+      "variancia_laplaciano",
+      "E1",
+      "E2",
+      "E3"
+    ]
+  },
+  "metadados": [
+    "image_id",
+    "class",
+    "experimental_split"
+  ],
+  "parametros": {
+    "rgb": "float64 / 255; 32x32",
+    "histograma": "8 intervalos fixos [0,1], normalizados por 1024",
+    "correlacao_canal_constante": 0,
+    "laplaciano": "4 vizinhos; extensão de borda; cinza [0,1]; variância populacional",
+    "energia_nula": "vetor espectral zero; imagens registradas",
+    "correlacao_excessiva_abs_min": 0.95
+  },
+  "verificacoes": {
+    "ids_unicos": true,
+    "valores_finitos": true,
+    "reproducibilidade_mesma_imagem": true,
+    "particoes": [
+      "train",
+      "validation"
+    ],
+    "correspondencia_arquivos": true,
+    "energia_nula": [],
+    "comparacao_etapa_2": {
+      "disponivel": true,
+      "imagens_comparadas": 210,
+      "erro_absoluto_maximo": 0.0
+    }
+  },
+  "constantes_treino": [],
+  "correlacoes_treino": [
+    {
+      "caracteristicas": [
+        "hist_r_7",
+        "hist_g_7"
+      ],
+      "pearson": 0.9630919811460675
+    },
+    {
+      "caracteristicas": [
+        "hist_g_7",
+        "hist_b_7"
+      ],
+      "pearson": 0.9810254619290535
+    },
+    {
+      "caracteristicas": [
+        "dif_horizontal_r",
+        "dif_horizontal_g"
+      ],
+      "pearson": 0.994782840075303
+    },
+    {
+      "caracteristicas": [
+        "dif_horizontal_r",
+        "dif_horizontal_b"
+      ],
+      "pearson": 0.9915768569956158
+    },
+    {
+      "caracteristicas": [
+        "dif_horizontal_g",
+        "dif_horizontal_b"
+      ],
+      "pearson": 0.996852485520392
+    },
+    {
+      "caracteristicas": [
+        "dif_vertical_r",
+        "dif_vertical_g"
+      ],
+      "pearson": 0.9742404794731637
+    },
+    {
+      "caracteristicas": [
+        "dif_vertical_r",
+        "dif_vertical_b"
+      ],
+      "pearson": 0.9598845936698165
+    },
+    {
+      "caracteristicas": [
+        "dif_vertical_g",
+        "dif_vertical_b"
+      ],
+      "pearson": 0.9900453403074095
+    }
+  ],
+  "tempo_segundos": 1.6493339999999534
+}

@@ -9,9 +9,9 @@ import unittest
 
 from PIL import Image
 
-from genimage_prep.images import preprocess_image
-from genimage_prep.prepare import prepare
-from genimage_prep.sources import Candidate, LocalSource
+from preparacao_dados.imagens import preprocess_image
+from preparacao_dados.preparar import prepare
+from preparacao_dados.fontes import Candidate, LocalSource
 
 
 def image_bytes(value: int, size=(13, 7), image_format="PNG") -> bytes:

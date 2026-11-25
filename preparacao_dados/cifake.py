@@ -1,4 +1,4 @@
-﻿"""Inspeção, anotação visual e preparação do CIFAKE."""
+"""Inspeção, anotação visual e preparação do CIFAKE."""
 import argparse
 from collections import Counter
 import csv
@@ -12,10 +12,10 @@ from zipfile import ZipFile
 from PIL import Image, ImageDraw, ImageOps
 import yaml
 
-from .images import inspect_image
+from .imagens import inspect_image
 
 ROOT = Path("data/raw/cifake")
-RESULTS = Path("results/cifake")
+RESULTS = Path("resultados/cifake")
 LABELS = {"REAL": 0, "FAKE": 1}
 FIELDS = ["image_id", "source_path", "original_split", "class", "sha256",
           "sheet", "position", "automobile"]
@@ -91,7 +91,7 @@ def write_csv(path, rows, fields):
 
 def contacts(rows, seed=42, train_count=1500, test_count=500):
     chosen = []
-    folder = RESULTS / "contact_sheets"
+    folder = RESULTS / "folhas_contato"
     folder.mkdir(parents=True, exist_ok=True)
     for split in ("train", "test"):
         for label in (0, 1):
@@ -171,14 +171,14 @@ def main():
     cfg = yaml.safe_load(Path("config.yaml").read_text(encoding="utf-8"))["cifake"]
     RESULTS.mkdir(parents=True, exist_ok=True)
     if args.action == "inspect":
-        selection_path = RESULTS / "category_selection.csv"
+        selection_path = RESULTS / "selecao_categoria.csv"
         if selection_path.exists():
             raise SystemExit("A seleção já existe. Preserve as anotações antes de gerar novas folhas.")
         rows, invalid, summary = inventory_archive(args.archive) if args.archive else inventory()
         selected = contacts(rows, cfg["seed"], cfg["contact_candidates"]["train"],
                             cfg["contact_candidates"]["test"])
         write_csv(selection_path, selected, FIELDS)
-        write_csv(RESULTS / "category_inventory.csv", summary,
+        write_csv(RESULTS / "inventario_categorias.csv", summary,
                   ["split", "class", "resolution", "format", "count"])
         report = {
             "dataset": "CIFAKE", "kaggle_version": 3, "total_valid": len(rows),
@@ -194,15 +194,15 @@ def main():
             report["archive_size_bytes"] = args.archive.stat().st_size
             with args.archive.open("rb") as archive:
                 report["archive_sha256"] = hashlib.file_digest(archive, "sha256").hexdigest()
-        (RESULTS / "dataset_summary.json").write_text(
+        (RESULTS / "resumo_dataset.json").write_text(
             json.dumps(report, ensure_ascii=False, indent=2) + "\n", encoding="utf-8"
         )
         print(f"{len(rows)} válidas, {len(invalid)} inválidas, {len(selected)} para anotação.")
     else:
-        with (RESULTS / "category_selection.csv").open(encoding="utf-8", newline="") as f:
+        with (RESULTS / "selecao_categoria.csv").open(encoding="utf-8", newline="") as f:
             selection = list(csv.DictReader(f))
-        manifest = prepare(selection, cfg["per_class"], Path("data/prepared/cifake"), cfg["seed"])
-        summary_path = RESULTS / "dataset_summary.json"
+        manifest = prepare(selection, cfg["per_class"], Path("data/preparados/cifake"), cfg["seed"])
+        summary_path = RESULTS / "resumo_dataset.json"
         summary = json.loads(summary_path.read_text(encoding="utf-8"))
         summary["selection_status"] = "complete"
         summary["confirmed_selected"] = len(manifest)

@@ -9,5 +9,5 @@ __pycache__/
 .pytest_cache/
 .mypy_cache/
 /.coverage
-/results/cifake/contact_sheets/
-/results/cifake/semantic_review_sheets/
+/resultados/cifake/folhas_contato/
+/resultados/cifake/folhas_revisao_semantica/

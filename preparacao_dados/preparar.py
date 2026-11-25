@@ -12,8 +12,8 @@ from tempfile import TemporaryDirectory
 
 from PIL import Image
 
-from .images import inspect_image
-from .sources import GENERATOR, HubSource, LocalSource
+from .imagens import inspect_image
+from .fontes import GENERATOR, HubSource, LocalSource
 
 
 FIELDS = (

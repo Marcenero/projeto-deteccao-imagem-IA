@@ -5,7 +5,7 @@ import unittest
 from unittest.mock import patch
 
 from PIL import Image
-from genimage_prep import semantic
+from preparacao_dados import selecao_semantica as semantic
 
 
 class SemanticTests(unittest.TestCase):

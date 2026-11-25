@@ -1,5 +1,5 @@
 ﻿import unittest
-from genimage_prep.category_inventory import inventory
+from preparacao_dados.inventario_categorias import inventory
 
 
 class CategoryInventoryTests(unittest.TestCase):

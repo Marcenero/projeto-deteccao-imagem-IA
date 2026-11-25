@@ -1,4 +1,4 @@
-﻿"""Priorização e revisão humana de automóveis no CIFAKE."""
+"""Priorização e revisão humana de automóveis no CIFAKE."""
 import argparse
 from collections import Counter
 import csv
@@ -28,10 +28,10 @@ STD = (0.2023, 0.1994, 0.2010)
 PRED_FIELDS = ("image_id", "source_path", "original_split", "class", "top_category",
                "automobile_probability", "automobile_rank")
 MAP_FIELDS = ("sheet", "position", "short_id", "image_id", "source_path", "group")
-PRED_PATH = RESULTS / "semantic_predictions.csv"
-MAP_PATH = RESULTS / "semantic_review_map.csv"
-SELECTION = RESULTS / "category_selection.csv"
-SHEETS = RESULTS / "semantic_review_sheets"
+PRED_PATH = RESULTS / "predicoes_semanticas.csv"
+MAP_PATH = RESULTS / "mapa_revisao_semantica.csv"
+SELECTION = RESULTS / "selecao_categoria.csv"
+SHEETS = RESULTS / "folhas_revisao_semantica"
 
 
 def read_csv(path):
@@ -215,7 +215,7 @@ def main():
                 "seconds": seconds, "count": len(predictions), "batch_size": 64,
                 "mean": MEAN, "std": STD, "device": "cpu",
                 "classes": CLASSES}
-        (RESULTS / "semantic_inference.json").write_text(
+        (RESULTS / "inferencia_semantica.json").write_text(
             json.dumps(info, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
         print(f"Inferência concluída em {seconds:.1f} s")
     elif args.action == "sheets":

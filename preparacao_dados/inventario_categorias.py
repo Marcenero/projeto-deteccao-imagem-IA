@@ -1,4 +1,4 @@
-﻿"""Inventário preliminar de nomes sem presumir correspondência semântica."""
+"""Inventário preliminar de nomes sem presumir correspondência semântica."""
 import argparse
 import csv
 import json
@@ -46,9 +46,9 @@ def main():
     args = parser.parse_args()
     read = lambda path: json.loads(path.read_text(encoding="utf-8"))
     rows, unknown = inventory(read(args.class_map), read(args.train_index), read(args.test_index))
-    output = Path("results")
+    output = Path("resultados")
     output.mkdir(exist_ok=True)
-    with (output / "category_inventory.csv").open("w", encoding="utf-8", newline="") as f:
+    with (output / "inventario_categorias.csv").open("w", encoding="utf-8", newline="") as f:
         writer = csv.DictWriter(f, fieldnames=rows[0].keys())
         writer.writeheader()
         writer.writerows(rows)
@@ -67,7 +67,7 @@ def main():
             "dataset": "https://huggingface.co/datasets/nebula/GenImage-arrow",
         },
     }
-    (output / "category_inventory_summary.json").write_text(
+    (output / "resumo_inventario_categorias.json").write_text(
         json.dumps(summary, ensure_ascii=False, indent=2) + "\n", encoding="utf-8"
     )
 

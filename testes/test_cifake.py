@@ -5,7 +5,7 @@ from tempfile import TemporaryDirectory
 import unittest
 
 from PIL import Image
-from genimage_prep.cifake import inventory, prepare, preprocess_cifake
+from preparacao_dados.cifake import inventory, prepare, preprocess_cifake
 
 
 class CifakeTests(unittest.TestCase):

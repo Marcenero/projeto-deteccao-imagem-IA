@@ -6,8 +6,8 @@ import shutil
 
 import yaml
 
-from .prepare import SPLITS, prepare
-from .sources import HubSource, LocalSource
+from .preparar import SPLITS, prepare
+from .fontes import HubSource, LocalSource
 
 
 def main() -> int:
