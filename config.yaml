@@ -1,0 +1,15 @@
+seed: 42
+image_size: [256, 256]
+
+profiles:
+  smoke:
+    per_class: {train: 140, validation: 20, test: 40}
+    stream_budget_mib: 1024
+    max_batches_per_shard: 3
+  experiment:
+    per_class: {train: 1400, validation: 200, test: 400}
+    stream_budget_mib: 5120
+    max_batches_per_shard: 12
+
+output_dir: data/prepared
+summary_path: results/dataset_summary.json

@@ -1,0 +1,4 @@
+Pillow==11.3.0
+PyYAML==6.0.2
+pyarrow==26.0.1
+requests==2.34.2
