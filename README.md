@@ -198,3 +198,84 @@ O comando ajusta os modelos com 210 imagens e avalia as 30 imagens de validaçã
 FAKE é positiva. A matriz usa linhas verdadeiras e colunas previstas na ordem REAL, FAKE. Acurácia = (VP+VN)/N; precisão = VP/(VP+FP); recall = VP/(VP+FN); especificidade = VN/(VN+FP); F1 = 2VP/(2VP+FP+FN). Denominadores zero produzem 0. A decisão padrão escolhe a classe com maior probabilidade; empates favorecem REAL, a primeira classe. As probabilidades em paralelo podem variar em arredondamento; o recarregamento verifica classes exatas e probabilidades com tolerância absoluta 1e-14.
 
 As métricas de treino não são independentes. O treino é pequeno e a validação tem apenas 30 imagens; todas são automóveis 32 × 32. Compressão e construção do CIFAKE podem influenciar resultados. Importâncias por impureza são afetadas por correlação e não implicam causalidade. O resultado preliminar não comprova robustez ou generalização a outros datasets.
+
+
+## Etapa 5: robustez no teste
+
+Execute `python -m experimentos.robustez` na raiz com o ambiente virtual ativo. A execução carrega os modelos congelados, verifica seus hashes e o manifesto e sobrescreve os resultados em `resultados/robustez/`. As 60 imagens reservadas são avaliadas nos sete cenários, sem novo treinamento ou ajuste de limiar.
+
+Cada transformação parte da imagem RGB original: `original`; `jpeg_75` e `jpeg_30`, em memória, qualidade 75 ou 30, subsampling 0, optimize e progressive desativados; `resize_75` e `resize_50`, redução Lanczos a 24 ou 16 pixels seguida de retorno bilinear a 32; `blur_05` e `blur_10`, filtro gaussiano SciPy com sigma 0,5 ou 1,0, bordas reflect, truncate 4 e sem misturar canais. O blur é arredondado para uint8. O retorno ao tamanho original não recupera informação perdida; imagens originais já têm compressão JPEG histórica.
+
+Os CSVs registram características, 1.260 predições, métricas, variações e resumo; `parametros.json` registra configurações antes da avaliação, e `relatorio.json` registra hashes e duração. `figuras/` contém comparações, exemplos e matrizes. Variações são transformado menos original; acerto para erro, erro para acerto e mudança de previsão são pareados por ID. F1 médio e pior F1 usam apenas os seis cenários transformados.
+
+As imagens derivadas dependem das mesmas 60 originais e não são observações independentes. A baixa resolução, o tamanho do teste, a seleção semântica assistida e possíveis vieses da construção do CIFAKE limitam a interpretação. Não é possível generalizar diretamente a outros geradores e categorias.
+
+
+## Etapa 5.1: aumento de dados
+
+O experimento compara três florestas originais com três florestas treinadas a partir de 210 imagens de treino e seis transformações independentes por imagem (1.470 instâncias). As mesmas transformações da Etapa 5 são aplicadas a 30 imagens de validação para uma comparação pareada. Identificadores e cenários são metadados, não entradas; a partição de teste não é usada. Os hiperparâmetros são idênticos aos anteriores.
+
+[Wang et al. (2020)](https://openaccess.thecvf.com/content_CVPR_2020/html/Wang_CNN-Generated_Images_Are_Surprisingly_Easy_to_Spot..._for_Now_CVPR_2020_paper.html) investigam aumento com pós-processamento em um detector baseado em rede neural. Aqui adaptamos o princípio para Random Forest e características manuais; não reproduzimos integralmente o artigo.
+
+```powershell
+.\.venv\Scripts\python.exe -m unittest discover -s testes -v
+.\.venv\Scripts\python.exe -m melhorias.treinamento_robusto
+```
+
+As saídas ficam em `resultados/melhorias/aumento_dados/`: características por origem e cenário, modelos separados, métricas, predições, comparação, figuras e relatório. O comando substitui as saídas dessa pasta, preservando os experimentos anteriores. As sete versões de cada imagem não são observações independentes. Os resultados na validação são exploratórios; a avaliação final das melhorias requer nova amostra independente do CIFAKE, distinta das já usadas.
+
+
+## Etapa 5.2: espectro ampliado
+
+A representação ampliada investiga a distribuição de energia abaixo de 0,25 ciclos/pixel e a forma global do espectro. A FFT, remoção da média, exclusão de DC e de raios acima de 0,5 e normalização permanecem as da Etapa 2. As faixas são B1 (0; 0,0625), B2 [0,0625; 0,125), B3 [0,125; 0,1875), B4 [0,1875; 0,25), E1 [0,25; 0,3125), E2 [0,3125; 0,375), E3 [0,375; 0,5].
+
+O centroide é C = soma(r_i p_i); a entropia normalizada é H = -soma(p_i ln p_i)/ln K, com 0 ln 0 = 0 e K coeficientes da região. Para energia nula, todas as oito entradas e B1 são zero, conforme a convenção da etapa anterior. A ordem é E1, E2, E3, B2, B3, B4, centroide, entropia. B1 é diagnóstico: as sete energias somam 1 quando a energia é não nula. Etotal é a soma de E1, E2 e E3. As dimensões são 8 no espectral e 48 no híbrido ampliados; os vetores antigos não mudam.
+
+A ablação compara aumento de dados, ampliação espectral e modelo espacial, pareando identificadores em cada cenário. As saídas em `resultados/melhorias/espectro_ampliado/` incluem modelos, características, diagnósticos do treino, métricas, predições, ablação, figuras e relatório. A análise das distribuições usa somente treino; as métricas usam validação.
+
+```powershell
+.\.venv\Scripts\python.exe -m unittest discover -s testes -v
+.\.venv\Scripts\python.exe -m melhorias.treinamento_espectro_ampliado
+```
+
+O comando substitui apenas as saídas desta etapa. A grade 32 × 32 limita a resolução de frequências; variantes da mesma imagem não são independentes. A validação é exploratória e a avaliação repetida de melhorias nela pode adaptar escolhas à amostra. A avaliação final exige nova amostra independente do próprio CIFAKE.
+
+
+## Preparacao de amostra independente
+
+A selecao usa apenas o teste oficial CIFAKE, seed 43, exclui por identificador e SHA-256 as 4.000 imagens da selecao anterior e as 300 imagens experimentais. O sorteio seleciona 1.000 candidatos por classe; a ResNet-20 anterior prioriza candidatos com automobile entre as duas primeiras classes, e uma auditoria aleatoria inclui 25 candidatos nao priorizados por classe. As folhas ocultam classe e confianca; somente revisao humana confirma automoveis de passeio.
+
+```powershell
+.\.venv\Scripts\python.exe -m preparacao_independente.preparar revisar
+.\.venv\Scripts\python.exe -m preparacao_independente.preparar status
+```
+
+Em cada folha, informe os numeros aceitos e depois os ambiguos; os demais recebem `nao`. `p` pula e `q` encerra, preservando anotacoes. Arquivos, mapa e folhas ficam em `resultados/melhorias/teste_independente/`. O protocolo congelado antecede a avaliacao e nao executa detectores; as transformacoes futuras sao conhecidas pelo treino aumentado, portanto a avaliacao mede generalizacao a novas imagens, nao necessariamente a transformacoes ineditas.
+
+Duplicatas exatas sao excluidas por SHA-256. A triagem perceptual usa dHash em escala de cinza de 64 bits com distancia de Hamming ate 3, entre os 2.000 candidatos e entre eles e as 300 imagens anteriores. Ela pode deixar passar duplicatas; qualquer par apontado deve ser revisado. A selecao definitiva depende de revisao, cotas suficientes e verificacao de suspeitos; nao ha manifesto definitivo enquanto essas condicoes nao forem cumpridas.
+
+
+## Etapa 5.5B: avaliacao independente
+
+A amostra de 120 automoveis foi sorteada com seed 43 entre as anotacoes humanas confirmadas: 60 REAL e 60 FAKE, provenientes do teste oficial CIFAKE. Excluem-se os identificadores e hashes da amostra de desenvolvimento e dos candidatos historicos. Cada copia preserva os bytes JPEG e o manifesto independente registra seu SHA-256. O procedimento confere dHash com distancia de Hamming ate 3 entre as selecionadas e contra as 300 imagens anteriores; nao detectar pares suspeitos nao garante ausencia de duplicatas perceptuais.
+
+Os dez modelos congelados sao avaliados em sete cenarios sobre as mesmas imagens. As 840 instancias derivam de 120 originais e nao sao independentes. O F1 medio dos seis cenarios transformados e a metrica principal. Variacoes e ablacoes sao pareadas por identificador, e a pasta `resultados/melhorias/teste_independente/avaliacao/` contem caracteristicas, predicoes, metricas, resumo, ablacao, graficos e relatorio. A integridade dos modelos, manifestos e anotacoes e verificada antes da avaliacao; uma pasta de saida existente nao e sobrescrita.
+
+```powershell
+.\.venv\Scripts\python.exe -m unittest discover -s testes -v
+.\.venv\Scripts\python.exe -m melhorias.avaliacao_independente --saida resultados/melhorias/teste_independente/avaliacao_reproducao
+```
+
+A selecao semantica assistida pode introduzir vieses. As novas imagens sao independentes das usadas no desenvolvimento, mas pertencem ao mesmo dataset e dominio de automoveis. As transformacoes sao conhecidas pelos modelos aumentados; os resultados nao demonstram robustez a transformacoes ineditas e nao podem ser generalizados diretamente a outros datasets ou geradores. Diferencas pequenas nao demonstram superioridade estatistica; a analise estatistica complementar fica para a Etapa 6.
+
+
+## Etapa 6: consolidacao e incerteza
+
+A analise recalcula as 70 combinacoes independentes a partir das 8.400 predicoes, confere hashes e preserva os experimentos de teste inicial, validacao e teste independente em tabelas separadas. O bootstrap usa 10.000 amostras, seed 42, com 60 identificadores REAL e 60 FAKE sorteados com reposicao. O mesmo sorteio de imagens e usado para todos os modelos e cenarios; os intervalos percentis de 95% das diferencas sao calculados diretamente das diferencas pareadas.
+
+```powershell
+.\.venv\Scripts\python.exe -m unittest discover -s testes -v
+.\.venv\Scripts\python.exe -m analise_resultados.consolidar --saida resultados/analise_final_reproducao
+```
+
+As tabelas, figuras, sintese e relatorio ficam em `resultados/analise_final/`. A reproducao exige nova pasta para preservar os resultados existentes. Os intervalos sao condicionais aos modelos treinados e nao incorporam variacao de treinamento. Analises multiplas sao exploratorias; intervalo contendo zero nao prova equivalencia. O teste independente compartilha CIFAKE, categoria e transformacoes conhecidas; nao comprova generalizacao a outros dominios ou transformacoes ineditas.

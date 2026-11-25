@@ -1,0 +1,17 @@
+{
+  "seed": 43,
+  "metodo_sorteio": "ordenacao por image_id e random.Random(f\"43:{classe}\").shuffle; 60 por classe",
+  "contagens": {
+    "0": 60,
+    "1": 60
+  },
+  "hash_manifesto": "34bd18276507e233b8fde0f9011d3c30d4990fac7ba4c053827d5905409fb12d",
+  "hash_candidatos_anotados": "b2d1dcd16064ab1ef48433d8769c9b6749473c52273876946fc82afccae13483",
+  "hash_mapa_revisao": "e668da1d4c99b07091ffc7c9928424aef4c978a189b47bbdfdb047aad45ff23f",
+  "hash_manifesto_anterior": "6df4a531c3af61590b6f1e23c1ea99e24eebea452c7cc8e46686a96c8a764e2c",
+  "criterio_perceptual": "dHash 64 bits, distancia <=3, contra os selecionados e 300 anteriores; nenhum par",
+  "confirmadas_por_classe": {
+    "0": 93,
+    "1": 81
+  }
+}

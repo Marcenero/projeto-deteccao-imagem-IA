@@ -1,0 +1,55 @@
+{
+  "manifesto_sha256": "6df4a531c3af61590b6f1e23c1ea99e24eebea452c7cc8e46686a96c8a764e2c",
+  "modelos_sha256": {
+    "espacial": "151b03b82e95c7b0d8fbf676f02b1e7cf93248c96da658e297f182de03af4b56",
+    "espectral": "3abb1bb2d217bede54d34ca9c28635fd9cc4874fdae1a4977ab357c3703b4005",
+    "hibrido": "ace57651059dcdc4c0edc9e031f259629d51fa63d13f70dc0690dec4fd744dfa"
+  },
+  "parametros": {
+    "jpeg": {
+      "quality": [
+        75,
+        30
+      ],
+      "subsampling": 0,
+      "optimize": false,
+      "progressive": false
+    },
+    "resize": {
+      "tamanhos": [
+        24,
+        16
+      ],
+      "reducao": "Lanczos",
+      "retorno": "bilinear"
+    },
+    "blur": {
+      "sigma": [
+        0.5,
+        1.0
+      ],
+      "mode": "reflect",
+      "truncate": 4.0,
+      "conversao": "arredondamento para inteiro mais proximo, uint8"
+    },
+    "entrada": "RGB 32x32"
+  },
+  "cenarios": [
+    "original",
+    "jpeg_75",
+    "jpeg_30",
+    "resize_75",
+    "resize_50",
+    "blur_05",
+    "blur_10"
+  ],
+  "imagens": 60,
+  "predicoes": 1260,
+  "combinacoes": 21,
+  "tempo_segundos": 9.471100900000238,
+  "classes": {
+    "0": "REAL",
+    "1": "FAKE"
+  },
+  "comparacao": "pareada por image_id; referencia original do teste"
+}

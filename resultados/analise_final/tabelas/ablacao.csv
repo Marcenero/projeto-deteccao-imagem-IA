@@ -1,0 +1,15 @@
+efeito,referencia,comparado,delta_f1_original_pp,delta_f1_medio_transformados_pp,delta_pior_f1_pp
+abordagem,espacial_aumentado,hibrido_aumentado,0.0,-0.10482629994086334,-0.9021512838306767
+abordagem,espacial_aumentado,hibrido_aumentado_ampliado,-2.1194348173820265,-0.5954321486753233,-1.515151515151525
+ampliacao_espectral,hibrido_aumentado,hibrido_aumentado_ampliado,-2.1194348173820265,-0.49060584873446,-0.6130002313208482
+aumento,espacial_original,espacial_aumentado,-0.7300275482093666,1.9736010810091131,7.68025078369906
+aumento,espectral_original,espectral_aumentado,-3.8567493112947604,16.212062260846327,26.6370150728935
+aumento,hibrido_original,hibrido_aumentado,4.552458327496844,28.878762469935772,46.70550421856167
+aumento,espectral_original_ampliado,espectral_aumentado_ampliado,-0.2442748091603053,20.125004008550235,37.49019607843137
+ampliacao_espectral,espectral_original,espectral_original_ampliado,5.333333333333334,15.009222552685037,12.882629107981222
+ampliacao_espectral,espectral_aumentado,espectral_aumentado_ampliado,8.94580783546779,18.922164300388943,23.735810113519097
+aumento,hibrido_original_ampliado,hibrido_aumentado_ampliado,3.432588916459889,24.440028813497527,35.858585858585855
+ampliacao_espectral,hibrido_original,hibrido_original_ampliado,-0.999565406345071,3.948127807703783,10.233918128654967
+ampliacao_espectral,hibrido_aumentado,hibrido_aumentado_ampliado,-2.1194348173820265,-0.49060584873446,-0.6130002313208482
+combinacao,espacial_original,hibrido_original,-5.282485875706211,-27.009987688867522,-39.92740471869329
+combinacao,espacial_original,hibrido_original_ampliado,-6.282051282051282,-23.061859881163738,-29.69348659003832

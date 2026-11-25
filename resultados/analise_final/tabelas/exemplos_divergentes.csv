@@ -1,0 +1,8 @@
+criterio,referencia,comparado,image_id,classe,previsao_referencia,previsao_comparado
+divergencia_acerto_original,espacial_aumentado,hibrido_aumentado_ampliado,test/REAL/0033 (2).jpg,0,0,1
+divergencia_acerto_original,espacial_aumentado,hibrido_aumentado_ampliado,test/REAL/0204 (2).jpg,0,0,1
+divergencia_acerto_original,espacial_aumentado,hibrido_aumentado_ampliado,test/REAL/0056 (2).jpg,0,0,1
+divergencia_acerto_original,espacial_aumentado,hibrido_aumentado_ampliado,test/FAKE/59 (2).jpg,1,0,1
+divergencia_acerto_original,espacial_aumentado,hibrido_aumentado_ampliado,test/FAKE/164 (2).jpg,1,1,0
+divergencia_acerto_original,espacial_aumentado,hibrido_aumentado_ampliado,test/FAKE/321 (2).jpg,1,1,0
+divergencia_acerto_original,espacial_aumentado,hibrido_aumentado_ampliado,test/FAKE/863 (2).jpg,1,0,1

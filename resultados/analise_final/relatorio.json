@@ -1,0 +1,37 @@
+{
+  "bootstrap": {
+    "reamostragens": 10000,
+    "seed": 42,
+    "estratificacao": "60 REAL e 60 FAKE por imagem original",
+    "intervalo": "percentil 95%",
+    "condicional": "modelos treinados fixos"
+  },
+  "manifesto_anterior_sha256": "6df4a531c3af61590b6f1e23c1ea99e24eebea452c7cc8e46686a96c8a764e2c",
+  "manifesto_independente_sha256": "34bd18276507e233b8fde0f9011d3c30d4990fac7ba4c053827d5905409fb12d",
+  "protocolo_sha256": "67301d1e799e9afa8e11bcc6927068bd405b3a02358f4522ecc019639b66fe86",
+  "modelos_sha256": {
+    "espacial_original": "151b03b82e95c7b0d8fbf676f02b1e7cf93248c96da658e297f182de03af4b56",
+    "espacial_aumentado": "50ed7b7f134ccab508691950e5cffbe9fa4c20af10f7896fe7680d394c8be35d",
+    "espectral_original": "3abb1bb2d217bede54d34ca9c28635fd9cc4874fdae1a4977ab357c3703b4005",
+    "espectral_aumentado": "e1e5cd8682e3cd35c043483b1e5c8538a45bc63ad66e246730e528c8b4e507d7",
+    "hibrido_original": "ace57651059dcdc4c0edc9e031f259629d51fa63d13f70dc0690dec4fd744dfa",
+    "hibrido_aumentado": "f35f2280b08e900573018f0bcd5be6eb4823cfe2a0ee47789fe07cdd22a9b446",
+    "espectral_original_ampliado": "7dfdb6b96c21cc487bc209ac9d49c1b2de56660426955eab255a4f1f380dc591",
+    "espectral_aumentado_ampliado": "0f5ee249e9c6cb86fc45b75cae2571417e4870e7f9b399df94eaa4c0afccccb4",
+    "hibrido_original_ampliado": "2c63dbcc0d6d72e945e17563e721b8247485969186e67bfdb91b64e184a6d527",
+    "hibrido_aumentado_ampliado": "fb9f2dc966355a7c2b186184ceb593c9cb17f99749a94e504cce38c2b64b4fc0"
+  },
+  "entradas_sha256": {
+    "predicoes.csv": "2edb340180a187dbb5f3f434e0cfd2e84f3c4700afec2afde0771ba804991674",
+    "metricas.csv": "ce6b7a6b5724a1a6961e210f2a63dab9a8494b7351f2585eac85426bf6ba7eba",
+    "caracteristicas.csv": "a222f2e783e396139422f7a5ce001424c2a81761a52b67956d297154677a4eb2"
+  },
+  "verificacoes": {
+    "predicoes": 8400,
+    "combinacoes": 70,
+    "diferenca_maxima_metricas": 0.0,
+    "ids_unicos": 120,
+    "independencia_hash_id": true
+  },
+  "tempo_segundos": 2.812904800000979
+}

@@ -1,0 +1,40 @@
+{
+  "cenarios": [
+    "original",
+    "jpeg_75",
+    "jpeg_30",
+    "resize_75",
+    "resize_50",
+    "blur_05",
+    "blur_10"
+  ],
+  "parametros": {
+    "jpeg": {
+      "quality": [
+        75,
+        30
+      ],
+      "subsampling": 0,
+      "optimize": false,
+      "progressive": false
+    },
+    "resize": {
+      "tamanhos": [
+        24,
+        16
+      ],
+      "reducao": "Lanczos",
+      "retorno": "bilinear"
+    },
+    "blur": {
+      "sigma": [
+        0.5,
+        1.0
+      ],
+      "mode": "reflect",
+      "truncate": 4.0,
+      "conversao": "arredondamento para inteiro mais proximo, uint8"
+    },
+    "entrada": "RGB 32x32"
+  }
+}

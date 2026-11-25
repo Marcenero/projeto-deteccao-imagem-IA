@@ -1,0 +1,180 @@
+{
+  "manifesto_sha256": "6df4a531c3af61590b6f1e23c1ea99e24eebea452c7cc8e46686a96c8a764e2c",
+  "modelos_originais": {
+    "espacial": "151b03b82e95c7b0d8fbf676f02b1e7cf93248c96da658e297f182de03af4b56",
+    "espectral": "3abb1bb2d217bede54d34ca9c28635fd9cc4874fdae1a4977ab357c3703b4005",
+    "hibrido": "ace57651059dcdc4c0edc9e031f259629d51fa63d13f70dc0690dec4fd744dfa"
+  },
+  "modelos_aumentados": {
+    "espacial": "50ed7b7f134ccab508691950e5cffbe9fa4c20af10f7896fe7680d394c8be35d",
+    "espectral": "e1e5cd8682e3cd35c043483b1e5c8538a45bc63ad66e246730e528c8b4e507d7",
+    "hibrido": "f35f2280b08e900573018f0bcd5be6eb4823cfe2a0ee47789fe07cdd22a9b446"
+  },
+  "parametros": {
+    "n_estimators": 300,
+    "max_depth": 6,
+    "min_samples_split": 4,
+    "min_samples_leaf": 2,
+    "max_features": 1.0,
+    "criterion": "gini",
+    "bootstrap": true,
+    "random_state": 42,
+    "n_jobs": -1
+  },
+  "transformacoes": {
+    "jpeg": {
+      "quality": [
+        75,
+        30
+      ],
+      "subsampling": 0,
+      "optimize": false,
+      "progressive": false
+    },
+    "resize": {
+      "tamanhos": [
+        24,
+        16
+      ],
+      "reducao": "Lanczos",
+      "retorno": "bilinear"
+    },
+    "blur": {
+      "sigma": [
+        0.5,
+        1.0
+      ],
+      "mode": "reflect",
+      "truncate": 4.0,
+      "conversao": "arredondamento para inteiro mais proximo, uint8"
+    },
+    "entrada": "RGB 32x32"
+  },
+  "cenarios": [
+    "original",
+    "jpeg_75",
+    "jpeg_30",
+    "resize_75",
+    "resize_50",
+    "blur_05",
+    "blur_10"
+  ],
+  "ordem_caracteristicas": {
+    "espacial": [
+      "media_r",
+      "media_g",
+      "media_b",
+      "desvio_r",
+      "desvio_g",
+      "desvio_b",
+      "hist_r_0",
+      "hist_r_1",
+      "hist_r_2",
+      "hist_r_3",
+      "hist_r_4",
+      "hist_r_5",
+      "hist_r_6",
+      "hist_r_7",
+      "hist_g_0",
+      "hist_g_1",
+      "hist_g_2",
+      "hist_g_3",
+      "hist_g_4",
+      "hist_g_5",
+      "hist_g_6",
+      "hist_g_7",
+      "hist_b_0",
+      "hist_b_1",
+      "hist_b_2",
+      "hist_b_3",
+      "hist_b_4",
+      "hist_b_5",
+      "hist_b_6",
+      "hist_b_7",
+      "corr_rg",
+      "corr_rb",
+      "corr_gb",
+      "dif_horizontal_r",
+      "dif_horizontal_g",
+      "dif_horizontal_b",
+      "dif_vertical_r",
+      "dif_vertical_g",
+      "dif_vertical_b",
+      "variancia_laplaciano"
+    ],
+    "espectral": [
+      "E1",
+      "E2",
+      "E3"
+    ],
+    "hibrido": [
+      "media_r",
+      "media_g",
+      "media_b",
+      "desvio_r",
+      "desvio_g",
+      "desvio_b",
+      "hist_r_0",
+      "hist_r_1",
+      "hist_r_2",
+      "hist_r_3",
+      "hist_r_4",
+      "hist_r_5",
+      "hist_r_6",
+      "hist_r_7",
+      "hist_g_0",
+      "hist_g_1",
+      "hist_g_2",
+      "hist_g_3",
+      "hist_g_4",
+      "hist_g_5",
+      "hist_g_6",
+      "hist_g_7",
+      "hist_b_0",
+      "hist_b_1",
+      "hist_b_2",
+      "hist_b_3",
+      "hist_b_4",
+      "hist_b_5",
+      "hist_b_6",
+      "hist_b_7",
+      "corr_rg",
+      "corr_rb",
+      "corr_gb",
+      "dif_horizontal_r",
+      "dif_horizontal_g",
+      "dif_horizontal_b",
+      "dif_vertical_r",
+      "dif_vertical_g",
+      "dif_vertical_b",
+      "variancia_laplaciano",
+      "E1",
+      "E2",
+      "E3"
+    ]
+  },
+  "contagens": {
+    "treino_imagens": 210,
+    "treino_instancias": 1470,
+    "validacao_imagens": 30,
+    "validacao_instancias": 210,
+    "predicoes": 1260,
+    "combinacoes": 42
+  },
+  "tempo_extracao_segundos": 1.7632078999995429,
+  "tempo_treinamento_segundos": {
+    "espacial": 0.7363292999998521,
+    "espectral": 0.37910420000025624,
+    "hibrido": 0.7481038000005356
+  },
+  "tempo_total_segundos": 9.613593300000502,
+  "versoes": {
+    "python": "3.12.6",
+    "numpy": "2.5.5",
+    "sklearn": "1.9.1",
+    "scipy": "1.18.1",
+    "pillow": "11.3.0",
+    "joblib": "1.6.0"
+  },
+  "observacao": "Validacao exploratoria; instancias derivadas nao independentes; teste nao utilizado."
+}

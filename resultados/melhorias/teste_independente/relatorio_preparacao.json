@@ -1,0 +1,37 @@
+{
+  "seed": 43,
+  "metodo": "dHash 64 bits; distancia Hamming <= 3; suspeita, exige revisao humana",
+  "inventario": {
+    "total_0": 10000,
+    "id_excluido_0": 500,
+    "total_1": 10000,
+    "hash_historico_1": 16,
+    "id_excluido_1": 500,
+    "hash_duplicado_1": 34
+  },
+  "elegiveis": {
+    "0": 9500,
+    "1": 9450
+  },
+  "candidatos": {
+    "0": 1000,
+    "1": 1000
+  },
+  "priorizados": {
+    "1": 125,
+    "0": 139
+  },
+  "auditoria": {
+    "1": 25,
+    "0": 25
+  },
+  "imagens_em_folhas": 314,
+  "folhas": 4,
+  "pares_suspeitos": 0,
+  "tempo_inferencia_segundos": 1.903670499999862,
+  "tempo_total_segundos": 132.3778830000001,
+  "manifesto_original_sha256": "6df4a531c3af61590b6f1e23c1ea99e24eebea452c7cc8e46686a96c8a764e2c",
+  "estado": "revisao_pendente",
+  "resnet_codigo_sha256": "885b8fd2ccfb8ee27c02d3a382e2951622fdcbc2af2bbca375aaf71d40f5f246",
+  "resnet_pesos_sha256": "4118986f0df73003d572b0e397f0ac7b3f60af1f31aff3d2da164536e36f6ec8"
+}
